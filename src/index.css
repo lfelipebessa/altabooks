@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-primary: #F5C518;
+  --color-brand-hover: #E0B400;
+  --color-brand-bg: #FFFFFF;
+  --color-brand-bg-section: #F8F9FB;
+  --color-brand-bg-card: #F1F3F5;
+  --color-brand-text-main: #111111;
+  --color-brand-text-body: #333333;
+  --color-brand-bg-badge: #FEF9E7;
+  
+  --font-sans: 'DM Sans', sans-serif;
+  --font-serif: 'DM Serif Display', serif;
+}
+
+@layer base {
+  :root {
+    --background: var(--color-brand-bg);
+    --foreground: var(--color-brand-text-main);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    @apply font-sans antialiased bg-brand-bg text-brand-text-main overflow-x-hidden;
+  }
+}
