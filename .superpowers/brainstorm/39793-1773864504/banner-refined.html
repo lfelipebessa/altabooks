@@ -1,0 +1,168 @@
+<style>
+  body { background: #F8F9FB; }
+  .page-sim { max-width: 860px; margin: 0 auto; font-family: 'DM Sans', sans-serif; }
+  .topbar { background: #111; padding: 14px 24px; border-radius: 12px 12px 0 0; display: flex; align-items: center; gap: 12px; }
+  .topbar-logo { width: 28px; height: 28px; background: #F5C518; border-radius: 4px; }
+  .topbar-title { color: #fff; font-size: 14px; font-weight: 600; opacity: 0.7; }
+  .page-body { background: #fff; border-radius: 0 0 12px 12px; padding: 0 0 24px 0; border: 1px solid #e5e7eb; border-top: none; }
+
+  .banner-wrap { padding: 20px 24px; background: #F8F9FB; }
+
+  /* Combined: C shape + A background */
+  .banner {
+    border-radius: 14px;
+    padding: 20px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  /* Variant 1: gradient âmbar suave */
+  .v1 {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border: 1.5px solid #fde68a;
+    box-shadow: 0 2px 12px rgba(245,197,24,0.10);
+  }
+
+  /* Variant 2: mais cremoso, menos saturado */
+  .v2 {
+    background: linear-gradient(135deg, #fffdf0 0%, #fefce8 100%);
+    border: 1.5px solid #F5C518;
+    box-shadow: 0 2px 16px rgba(245,197,24,0.14);
+  }
+
+  /* Variant 3: fundo âmbar + borda + dot pulse animado */
+  .v3 {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef9e0 100%);
+    border: 2px solid #F5C518;
+    box-shadow: 0 4px 20px rgba(245,197,24,0.16);
+  }
+
+  .banner-left { display: flex; align-items: center; gap: 14px; }
+
+  .dot { width: 10px; height: 10px; background: #d97706; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 3px #fde68a; }
+  .dot-pulse { animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 3px #fde68a; } 50% { box-shadow: 0 0 0 5px #fef08a; } }
+
+  .banner-text h4 { font-size: 15px; font-weight: 700; color: #111; margin: 0 0 2px; }
+  .banner-text p { font-size: 13px; color: #78350f; margin: 0; opacity: 0.8; }
+
+  .btn-docs { background: transparent; color: #92400e; font-size: 13px; font-weight: 600; padding: 9px 16px; border-radius: 8px; border: 1.5px solid #d97706; cursor: pointer; white-space: nowrap; }
+  .btn-write { background: #111; color: #F5C518; font-size: 13px; font-weight: 800; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; white-space: nowrap; letter-spacing: 0.01em; }
+
+  .actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+  .page-content { padding: 22px 24px 0; }
+  .page-title { font-size: 22px; font-weight: 800; color: #111; margin: 0 0 4px; font-family: 'DM Serif Display', serif; }
+  .page-sub { font-size: 13px; color: #6b7280; margin: 0 0 20px; }
+  .ph { height: 54px; background: #f3f4f6; border-radius: 10px; margin-bottom: 12px; }
+  .ph.sm { height: 36px; }
+
+  .var-label { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: #9ca3af; padding: 0 4px 6px; }
+</style>
+
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800&family=DM+Serif+Display&display=swap" rel="stylesheet">
+
+<h2>Refinando o estilo C com fundo do A</h2>
+<p class="subtitle">Qual tom de âmbar funciona melhor?</p>
+
+<div class="cards" style="flex-direction: column; gap: 28px;">
+
+  <!-- V1 -->
+  <div class="card" data-choice="v1" onclick="toggleSelect(this)" style="padding: 0; overflow: hidden;">
+    <div class="card-body" style="padding: 10px 16px 8px; background: #fafafa; border-bottom: 1px solid #f0f0f0;">
+      <h3 style="margin:0;font-size:13px;">1 — Âmbar médio, borda suave</h3>
+    </div>
+    <div class="page-sim">
+      <div class="topbar"><div class="topbar-logo"></div><div class="topbar-title">AltaBooks / Café com Teu Pai</div></div>
+      <div class="page-body">
+        <div class="banner-wrap">
+          <div class="banner v1">
+            <div class="banner-left">
+              <div class="dot"></div>
+              <div class="banner-text">
+                <h4>Projeto Executivo pronto para revisão</h4>
+                <p>Revise o documento com o autor e inicie a escrita quando estiver pronto.</p>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="btn-docs">↗ Google Docs</button>
+              <button class="btn-write">Escrever Livro</button>
+            </div>
+          </div>
+        </div>
+        <div class="page-content">
+          <div class="page-title">Café com Teu Pai</div>
+          <div class="page-sub">Autor: Breno Leonardi · Criado em 15 mar 2026</div>
+          <div class="ph"></div><div class="ph sm"></div><div class="ph sm"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- V2 -->
+  <div class="card" data-choice="v2" onclick="toggleSelect(this)" style="padding: 0; overflow: hidden;">
+    <div class="card-body" style="padding: 10px 16px 8px; background: #fafafa; border-bottom: 1px solid #f0f0f0;">
+      <h3 style="margin:0;font-size:13px;">2 — Mais suave/cremoso, borda dourada forte</h3>
+    </div>
+    <div class="page-sim">
+      <div class="topbar"><div class="topbar-logo"></div><div class="topbar-title">AltaBooks / Café com Teu Pai</div></div>
+      <div class="page-body">
+        <div class="banner-wrap">
+          <div class="banner v2">
+            <div class="banner-left">
+              <div class="dot" style="background:#b45309;box-shadow:0 0 0 3px #fef9c3;"></div>
+              <div class="banner-text">
+                <h4>Projeto Executivo pronto para revisão</h4>
+                <p>Revise o documento com o autor e inicie a escrita quando estiver pronto.</p>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="btn-docs">↗ Google Docs</button>
+              <button class="btn-write">Escrever Livro</button>
+            </div>
+          </div>
+        </div>
+        <div class="page-content">
+          <div class="page-title">Café com Teu Pai</div>
+          <div class="page-sub">Autor: Breno Leonardi · Criado em 15 mar 2026</div>
+          <div class="ph"></div><div class="ph sm"></div><div class="ph sm"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- V3 -->
+  <div class="card" data-choice="v3" onclick="toggleSelect(this)" style="padding: 0; overflow: hidden;">
+    <div class="card-body" style="padding: 10px 16px 8px; background: #fafafa; border-bottom: 1px solid #f0f0f0;">
+      <h3 style="margin:0;font-size:13px;">3 — Âmbar + borda grossa + dot pulsando</h3>
+    </div>
+    <div class="page-sim">
+      <div class="topbar"><div class="topbar-logo"></div><div class="topbar-title">AltaBooks / Café com Teu Pai</div></div>
+      <div class="page-body">
+        <div class="banner-wrap">
+          <div class="banner v3">
+            <div class="banner-left">
+              <div class="dot dot-pulse"></div>
+              <div class="banner-text">
+                <h4>Projeto Executivo pronto para revisão</h4>
+                <p>Revise o documento com o autor e inicie a escrita quando estiver pronto.</p>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="btn-docs">↗ Google Docs</button>
+              <button class="btn-write">Escrever Livro</button>
+            </div>
+          </div>
+        </div>
+        <div class="page-content">
+          <div class="page-title">Café com Teu Pai</div>
+          <div class="page-sub">Autor: Breno Leonardi · Criado em 15 mar 2026</div>
+          <div class="ph"></div><div class="ph sm"></div><div class="ph sm"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

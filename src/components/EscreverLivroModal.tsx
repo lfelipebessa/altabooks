@@ -7,8 +7,7 @@ interface EscreverLivroModalProps {
   onClose: () => void;
 }
 
-const WEBHOOK_URL = 'https://primary-production-bd3cf.up.railway.app/webhook-test/ghostwriter/escrever-livro';
-// TODO: trocar para /webhook/ antes de ir a produção
+const WEBHOOK_URL = 'https://primary-production-bd3cf.up.railway.app/webhook/ghostwriter/escrever-livro';
 
 const CHECKLIST = [
   'O autor revisou e aprovou o Projeto Executivo',

@@ -1,0 +1,180 @@
+<style>
+  body { background: #F8F9FB; }
+  .page-sim { max-width: 860px; margin: 0 auto; font-family: 'DM Sans', sans-serif; }
+
+  /* Shared mockup page chrome */
+  .topbar { background: #111; padding: 14px 24px; border-radius: 12px 12px 0 0; display: flex; align-items: center; gap: 12px; margin-bottom: 0; }
+  .topbar-logo { width: 28px; height: 28px; background: #F5C518; border-radius: 4px; }
+  .topbar-title { color: #fff; font-size: 14px; font-weight: 600; opacity: 0.7; }
+  .page-body { background: #fff; border-radius: 0 0 12px 12px; padding: 0 0 20px 0; border: 1px solid #e5e7eb; border-top: none; }
+
+  /* Option card wrapper */
+  .opt-wrapper { margin-bottom: 32px; }
+  .opt-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #6b7280; margin-bottom: 8px; padding-left: 4px; }
+
+  /* ---- OPTION A: Amber gradient banner ---- */
+  .banner-a {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border-bottom: 1px solid #fde68a;
+    padding: 18px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .banner-a-left { display: flex; align-items: flex-start; gap: 14px; }
+  .banner-a-icon { width: 40px; height: 40px; background: #F5C518; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 18px; }
+  .banner-a-text h4 { font-size: 15px; font-weight: 700; color: #111; margin: 0 0 3px; }
+  .banner-a-text p { font-size: 13px; color: #6b5a00; margin: 0; line-height: 1.4; }
+  .banner-a-link { font-size: 12px; color: #d97706; font-weight: 600; text-decoration: underline; margin-top: 4px; display: block; }
+  .btn-primary { background: #111; color: #F5C518; font-size: 13px; font-weight: 700; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; white-space: nowrap; letter-spacing: 0.01em; }
+
+  /* ---- OPTION B: Dark immersive banner ---- */
+  .banner-b {
+    background: #111;
+    padding: 20px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .banner-b-left { display: flex; align-items: center; gap: 14px; }
+  .banner-b-pill { background: #F5C518; color: #111; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 100px; letter-spacing: 0.05em; text-transform: uppercase; flex-shrink: 0; }
+  .banner-b-text h4 { font-size: 15px; font-weight: 700; color: #fff; margin: 0 0 2px; }
+  .banner-b-text p { font-size: 13px; color: #9ca3af; margin: 0; }
+  .btn-gold { background: #F5C518; color: #111; font-size: 13px; font-weight: 800; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; white-space: nowrap; }
+
+  /* ---- OPTION C: Card floating ---- */
+  .banner-c-wrap { padding: 16px 28px; background: #F8F9FB; }
+  .banner-c {
+    background: #fff;
+    border: 1.5px solid #F5C518;
+    border-radius: 14px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    box-shadow: 0 2px 12px rgba(245,197,24,0.12);
+  }
+  .banner-c-left { display: flex; align-items: center; gap: 14px; }
+  .banner-c-dot { width: 10px; height: 10px; background: #F5C518; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 3px #fef9c3; }
+  .banner-c-text h4 { font-size: 15px; font-weight: 700; color: #111; margin: 0 0 2px; }
+  .banner-c-text p { font-size: 13px; color: #6b7280; margin: 0; }
+  .btn-outline { background: transparent; color: #111; font-size: 13px; font-weight: 700; padding: 9px 18px; border-radius: 8px; border: 2px solid #111; cursor: pointer; white-space: nowrap; margin-right: 8px; }
+
+  /* Page content sim */
+  .page-content { padding: 24px 28px 0; }
+  .page-title { font-size: 22px; font-weight: 800; color: #111; margin: 0 0 4px; font-family: 'DM Serif Display', serif; }
+  .page-sub { font-size: 13px; color: #6b7280; margin: 0 0 20px; }
+  .section-placeholder { height: 54px; background: #f3f4f6; border-radius: 10px; margin-bottom: 12px; }
+  .section-placeholder.sm { height: 36px; }
+</style>
+
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800&family=DM+Serif+Display&display=swap" rel="stylesheet">
+
+<h2>Como deve aparecer o banner "Escrever Livro"?</h2>
+<p class="subtitle">Quando o projeto está em "Aguardando Aprovação", qual estilo comunica melhor a ação pendente?</p>
+
+<div class="cards" style="flex-direction: column; gap: 28px;">
+
+  <!-- OPTION A -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)" style="padding: 0; overflow: hidden;">
+    <div class="card-body" style="padding: 12px 16px 8px; background: #fafafa; border-bottom: 1px solid #f0f0f0;">
+      <h3 style="margin:0; font-size: 14px;">A — Banner âmbar discreto</h3>
+      <p style="margin: 2px 0 0; font-size: 12px; color: #6b7280;">Warmth + link para o doc + botão escuro</p>
+    </div>
+    <div class="page-sim">
+      <div class="topbar"><div class="topbar-logo"></div><div class="topbar-title">AltaBooks / Café com Teu Pai</div></div>
+      <div class="page-body">
+        <div class="banner-a">
+          <div class="banner-a-left">
+            <div class="banner-a-icon">✍️</div>
+            <div class="banner-a-text">
+              <h4>Projeto Executivo pronto para revisão</h4>
+              <p>O autor pode editar o documento diretamente no Google Docs. Quando os ajustes estiverem feitos, clique em "Escrever Livro".</p>
+              <a class="banner-a-link" onclick="return false">↗ Abrir no Google Docs</a>
+            </div>
+          </div>
+          <button class="btn-primary">✦ Escrever Livro</button>
+        </div>
+        <div class="page-content">
+          <div class="page-title">Café com Teu Pai</div>
+          <div class="page-sub">Autor: Breno Leonardi · Criado em 15 mar 2026</div>
+          <div class="section-placeholder"></div>
+          <div class="section-placeholder sm"></div>
+          <div class="section-placeholder sm"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPTION B -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)" style="padding: 0; overflow: hidden;">
+    <div class="card-body" style="padding: 12px 16px 8px; background: #fafafa; border-bottom: 1px solid #f0f0f0;">
+      <h3 style="margin:0; font-size: 14px;">B — Banner escuro com destaque amarelo</h3>
+      <p style="margin: 2px 0 0; font-size: 12px; color: #6b7280;">Alto contraste, ação impossível de ignorar</p>
+    </div>
+    <div class="page-sim">
+      <div class="topbar"><div class="topbar-logo"></div><div class="topbar-title">AltaBooks / Café com Teu Pai</div></div>
+      <div class="page-body">
+        <div class="banner-b">
+          <div class="banner-b-left">
+            <div class="banner-b-pill">ação pendente</div>
+            <div class="banner-b-text">
+              <h4>Projeto Executivo aguardando aprovação</h4>
+              <p>Abra o doc, revise com o autor, depois clique em Escrever Livro.</p>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <span style="color:#9ca3af;font-size:12px;text-decoration:underline;cursor:pointer;white-space:nowrap;">↗ Google Docs</span>
+            <button class="btn-gold">Escrever Livro →</button>
+          </div>
+        </div>
+        <div class="page-content">
+          <div class="page-title">Café com Teu Pai</div>
+          <div class="page-sub">Autor: Breno Leonardi · Criado em 15 mar 2026</div>
+          <div class="section-placeholder"></div>
+          <div class="section-placeholder sm"></div>
+          <div class="section-placeholder sm"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPTION C -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)" style="padding: 0; overflow: hidden;">
+    <div class="card-body" style="padding: 12px 16px 8px; background: #fafafa; border-bottom: 1px solid #f0f0f0;">
+      <h3 style="margin:0; font-size: 14px;">C — Card com borda dourada</h3>
+      <p style="margin: 2px 0 0; font-size: 12px; color: #6b7280;">Mais integrado à página, tom menos urgente</p>
+    </div>
+    <div class="page-sim">
+      <div class="topbar"><div class="topbar-logo"></div><div class="topbar-title">AltaBooks / Café com Teu Pai</div></div>
+      <div class="page-body">
+        <div class="banner-c-wrap">
+          <div class="banner-c">
+            <div class="banner-c-left">
+              <div class="banner-c-dot"></div>
+              <div class="banner-c-text">
+                <h4>Aguardando aprovação do Projeto Executivo</h4>
+                <p>Revise o documento, faça os ajustes necessários e inicie a escrita.</p>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+              <button class="btn-outline">↗ Google Docs</button>
+              <button class="btn-primary">Escrever Livro</button>
+            </div>
+          </div>
+        </div>
+        <div class="page-content">
+          <div class="page-title">Café com Teu Pai</div>
+          <div class="page-sub">Autor: Breno Leonardi · Criado em 15 mar 2026</div>
+          <div class="section-placeholder"></div>
+          <div class="section-placeholder sm"></div>
+          <div class="section-placeholder sm"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
