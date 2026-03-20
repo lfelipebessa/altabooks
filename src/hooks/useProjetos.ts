@@ -18,7 +18,11 @@ export function useProjetos() {
       if (fetchError) throw fetchError
       setProjetos(data || [])
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar projetos')
+      const msg =
+        err instanceof Error
+          ? err.message
+          : (err as { message?: string })?.message ?? 'Erro ao carregar projetos'
+      setError(msg)
     } finally {
       setLoading(false)
     }
