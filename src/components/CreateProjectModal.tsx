@@ -39,6 +39,10 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             setError('Páginas máximo deve ser maior ou igual ao mínimo.');
             return;
         }
+        if (qtdCapitulos < 1 || qtdCapitulos > 30) {
+            setError('Número de capítulos deve ser entre 1 e 30.');
+            return;
+        }
         if (isFormValid) {
             setLoading(true);
             try {
@@ -64,14 +68,14 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 setName('');
                 setAuthor('');
                 setDriveLink('');
-                onSuccess();
-                onClose();
                 setQtdCapitulos(12);
                 setSubcapitulosMin(6);
                 setSubcapitulosMax(8);
                 setPaginasMin(180);
                 setPaginasMax(205);
                 setShowConfig(false);
+                onSuccess();
+                onClose();
             } catch (err: any) {
                 console.error('Webhook error:', err);
                 setError(err.message || 'Erro ao criar o projeto. Tente novamente.');
@@ -181,7 +185,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                         type="number" min={1} max={30} disabled={loading}
                                         className="w-full px-4 py-2 bg-brand-bg border border-brand-bg-card rounded-lg focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors text-brand-text-main"
                                         value={qtdCapitulos}
-                                        onChange={(e) => setQtdCapitulos(Number(e.target.value))}
+                                        onChange={(e) => setQtdCapitulos(e.target.valueAsNumber || 12)}
                                     />
                                 </div>
 
@@ -196,7 +200,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                                 type="number" min={1} max={20} disabled={loading}
                                                 className="w-full px-4 py-2 bg-brand-bg border border-brand-bg-card rounded-lg focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors text-brand-text-main"
                                                 value={subcapitulosMin}
-                                                onChange={(e) => setSubcapitulosMin(Number(e.target.value))}
+                                                onChange={(e) => setSubcapitulosMin(e.target.valueAsNumber || 6)}
                                             />
                                         </div>
                                         <span className="text-gray-400 pt-5">–</span>
@@ -206,7 +210,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                                 type="number" min={1} max={20} disabled={loading}
                                                 className="w-full px-4 py-2 bg-brand-bg border border-brand-bg-card rounded-lg focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors text-brand-text-main"
                                                 value={subcapitulosMax}
-                                                onChange={(e) => setSubcapitulosMax(Number(e.target.value))}
+                                                onChange={(e) => setSubcapitulosMax(e.target.valueAsNumber || 8)}
                                             />
                                         </div>
                                     </div>
@@ -223,7 +227,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                                 type="number" min={1} disabled={loading}
                                                 className="w-full px-4 py-2 bg-brand-bg border border-brand-bg-card rounded-lg focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors text-brand-text-main"
                                                 value={paginasMin}
-                                                onChange={(e) => setPaginasMin(Number(e.target.value))}
+                                                onChange={(e) => setPaginasMin(e.target.valueAsNumber || 180)}
                                             />
                                         </div>
                                         <span className="text-gray-400 pt-5">–</span>
@@ -233,7 +237,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                                 type="number" min={1} disabled={loading}
                                                 className="w-full px-4 py-2 bg-brand-bg border border-brand-bg-card rounded-lg focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors text-brand-text-main"
                                                 value={paginasMax}
-                                                onChange={(e) => setPaginasMax(Number(e.target.value))}
+                                                onChange={(e) => setPaginasMax(e.target.valueAsNumber || 205)}
                                             />
                                         </div>
                                     </div>
