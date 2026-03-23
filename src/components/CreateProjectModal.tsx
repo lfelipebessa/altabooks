@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Loader2 } from 'lucide-react';
+import { X, Loader2, ChevronDown } from 'lucide-react';
 
 interface CreateProjectModalProps {
     isOpen: boolean;
@@ -17,6 +17,12 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     const [driveLink, setDriveLink] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [showConfig, setShowConfig] = useState(false);
+    const [qtdCapitulos, setQtdCapitulos] = useState(12);
+    const [subcapitulosMin, setSubcapitulosMin] = useState(6);
+    const [subcapitulosMax, setSubcapitulosMax] = useState(8);
+    const [paginasMin, setPaginasMin] = useState(180);
+    const [paginasMax, setPaginasMax] = useState(205);
 
     if (!isOpen) return null;
 
@@ -25,24 +31,47 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
+        if (subcapitulosMax < subcapitulosMin) {
+            setError('Subcapítulos máximo deve ser maior ou igual ao mínimo.');
+            return;
+        }
+        if (paginasMax < paginasMin) {
+            setError('Páginas máximo deve ser maior ou igual ao mínimo.');
+            return;
+        }
         if (isFormValid) {
             setLoading(true);
             try {
                 const response = await fetch('https://primary-production-bd3cf.up.railway.app/webhook/ghostwriter/processar', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ projectName: name, authorName: author, driveLink }),
+                    body: JSON.stringify({
+                        projectName: name,
+                        authorName: author,
+                        driveLink,
+                        qtdCapitulos,
+                        qtdSubcapitulosMin: subcapitulosMin,
+                        qtdSubcapitulosMax: subcapitulosMax,
+                        paginasMin,
+                        paginasMax,
+                    }),
                 });
-                
+
                 if (!response.ok) {
                     throw new Error('Falha ao processar o webhook.');
                 }
-                
+
                 setName('');
                 setAuthor('');
                 setDriveLink('');
                 onSuccess();
                 onClose();
+                setQtdCapitulos(12);
+                setSubcapitulosMin(6);
+                setSubcapitulosMax(8);
+                setPaginasMin(180);
+                setPaginasMax(205);
+                setShowConfig(false);
             } catch (err: any) {
                 console.error('Webhook error:', err);
                 setError(err.message || 'Erro ao criar o projeto. Tente novamente.');
@@ -77,7 +106,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                             {error}
                         </div>
                     )}
-                    
+
                     <div className="space-y-4">
                         <div>
                             <label htmlFor="name" className="block text-sm font-medium text-brand-text-main mb-1">
@@ -126,6 +155,91 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                 onChange={(e) => setDriveLink(e.target.value)}
                             />
                         </div>
+                    </div>
+
+                    {/* Configurações do Livro — colapsável */}
+                    <div className="border-t border-gray-100 pt-4 mt-4">
+                        <button
+                            type="button"
+                            onClick={() => setShowConfig(v => !v)}
+                            className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-brand-text-main transition-colors w-full text-left"
+                        >
+                            <ChevronDown className={`w-4 h-4 transition-transform ${showConfig ? 'rotate-180' : ''}`} />
+                            Configurações do Livro
+                            <span className="ml-auto text-xs text-gray-400 font-normal">
+                                {qtdCapitulos} cap · {subcapitulosMin}–{subcapitulosMax} subcap · {paginasMin}–{paginasMax} pág
+                            </span>
+                        </button>
+
+                        {showConfig && (
+                            <div className="mt-4 space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-brand-text-main mb-1">
+                                        Número de Capítulos
+                                    </label>
+                                    <input
+                                        type="number" min={1} max={30} disabled={loading}
+                                        className="w-full px-4 py-2 bg-brand-bg border border-brand-bg-card rounded-lg focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors text-brand-text-main"
+                                        value={qtdCapitulos}
+                                        onChange={(e) => setQtdCapitulos(Number(e.target.value))}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-brand-text-main mb-1">
+                                        Subcapítulos por Capítulo
+                                    </label>
+                                    <div className="flex gap-3 items-center">
+                                        <div className="flex-1">
+                                            <span className="text-xs text-gray-500 mb-1 block">Mínimo</span>
+                                            <input
+                                                type="number" min={1} max={20} disabled={loading}
+                                                className="w-full px-4 py-2 bg-brand-bg border border-brand-bg-card rounded-lg focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors text-brand-text-main"
+                                                value={subcapitulosMin}
+                                                onChange={(e) => setSubcapitulosMin(Number(e.target.value))}
+                                            />
+                                        </div>
+                                        <span className="text-gray-400 pt-5">–</span>
+                                        <div className="flex-1">
+                                            <span className="text-xs text-gray-500 mb-1 block">Máximo</span>
+                                            <input
+                                                type="number" min={1} max={20} disabled={loading}
+                                                className="w-full px-4 py-2 bg-brand-bg border border-brand-bg-card rounded-lg focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors text-brand-text-main"
+                                                value={subcapitulosMax}
+                                                onChange={(e) => setSubcapitulosMax(Number(e.target.value))}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-brand-text-main mb-1">
+                                        Número de Páginas
+                                    </label>
+                                    <div className="flex gap-3 items-center">
+                                        <div className="flex-1">
+                                            <span className="text-xs text-gray-500 mb-1 block">Mínimo</span>
+                                            <input
+                                                type="number" min={1} disabled={loading}
+                                                className="w-full px-4 py-2 bg-brand-bg border border-brand-bg-card rounded-lg focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors text-brand-text-main"
+                                                value={paginasMin}
+                                                onChange={(e) => setPaginasMin(Number(e.target.value))}
+                                            />
+                                        </div>
+                                        <span className="text-gray-400 pt-5">–</span>
+                                        <div className="flex-1">
+                                            <span className="text-xs text-gray-500 mb-1 block">Máximo</span>
+                                            <input
+                                                type="number" min={1} disabled={loading}
+                                                className="w-full px-4 py-2 bg-brand-bg border border-brand-bg-card rounded-lg focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors text-brand-text-main"
+                                                value={paginasMax}
+                                                onChange={(e) => setPaginasMax(Number(e.target.value))}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="mt-8 flex gap-3 justify-end">
