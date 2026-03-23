@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Loader2, Settings } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Projeto } from '../types';
@@ -23,6 +23,15 @@ export const ConfiguracoesProjetoModal: React.FC<ConfiguracoesProjetoModalProps>
   const [paginasMax, setPaginasMax] = useState(projeto.paginas_max);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setQtdCapitulos(projeto.qtd_capitulos);
+    setSubcapitulosMin(projeto.qtd_subcapitulos_min);
+    setSubcapitulosMax(projeto.qtd_subcapitulos_max);
+    setPaginasMin(projeto.paginas_min);
+    setPaginasMax(projeto.paginas_max);
+    setError(null);
+  }, [projeto.id]);
 
   if (!isOpen) return null;
 
@@ -106,7 +115,7 @@ export const ConfiguracoesProjetoModal: React.FC<ConfiguracoesProjetoModalProps>
               type="number" min={1} max={30} disabled={loading}
               className={inputClass}
               value={qtdCapitulos}
-              onChange={(e) => setQtdCapitulos(e.target.valueAsNumber || 12)}
+              onChange={(e) => setQtdCapitulos(e.target.valueAsNumber || projeto.qtd_capitulos)}
             />
           </div>
 
@@ -122,7 +131,7 @@ export const ConfiguracoesProjetoModal: React.FC<ConfiguracoesProjetoModalProps>
                   type="number" min={1} max={20} disabled={loading}
                   className={inputClass}
                   value={subcapitulosMin}
-                  onChange={(e) => setSubcapitulosMin(e.target.valueAsNumber || 6)}
+                  onChange={(e) => setSubcapitulosMin(e.target.valueAsNumber || projeto.qtd_subcapitulos_min)}
                 />
               </div>
               <span className="text-gray-400 pt-5">–</span>
@@ -132,7 +141,7 @@ export const ConfiguracoesProjetoModal: React.FC<ConfiguracoesProjetoModalProps>
                   type="number" min={1} max={20} disabled={loading}
                   className={inputClass}
                   value={subcapitulosMax}
-                  onChange={(e) => setSubcapitulosMax(e.target.valueAsNumber || 8)}
+                  onChange={(e) => setSubcapitulosMax(e.target.valueAsNumber || projeto.qtd_subcapitulos_max)}
                 />
               </div>
             </div>
@@ -150,7 +159,7 @@ export const ConfiguracoesProjetoModal: React.FC<ConfiguracoesProjetoModalProps>
                   type="number" min={1} disabled={loading}
                   className={inputClass}
                   value={paginasMin}
-                  onChange={(e) => setPaginasMin(e.target.valueAsNumber || 180)}
+                  onChange={(e) => setPaginasMin(e.target.valueAsNumber || projeto.paginas_min)}
                 />
               </div>
               <span className="text-gray-400 pt-5">–</span>
@@ -160,7 +169,7 @@ export const ConfiguracoesProjetoModal: React.FC<ConfiguracoesProjetoModalProps>
                   type="number" min={1} disabled={loading}
                   className={inputClass}
                   value={paginasMax}
-                  onChange={(e) => setPaginasMax(e.target.valueAsNumber || 205)}
+                  onChange={(e) => setPaginasMax(e.target.valueAsNumber || projeto.paginas_max)}
                 />
               </div>
             </div>
@@ -178,6 +187,7 @@ export const ConfiguracoesProjetoModal: React.FC<ConfiguracoesProjetoModalProps>
             Cancelar
           </button>
           <button
+            type="button"
             onClick={handleSave}
             disabled={loading}
             className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-primary hover:bg-brand-hover text-brand-text-main font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
