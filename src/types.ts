@@ -13,6 +13,11 @@ export interface Projeto {
   id: string; nome_projeto: string; autor_nome: string
   drive_url: string | null; drive_executivo_url: string | null
   status: ProjetoStatus; created_at: string; updated_at: string | null
+  qtd_capitulos: number
+  qtd_subcapitulos_min: number
+  qtd_subcapitulos_max: number
+  paginas_min: number
+  paginas_max: number
 }
 
 export interface Arquivo {
