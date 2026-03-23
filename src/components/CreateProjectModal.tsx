@@ -76,9 +76,9 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 setShowConfig(false);
                 onSuccess();
                 onClose();
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error('Webhook error:', err);
-                setError(err.message || 'Erro ao criar o projeto. Tente novamente.');
+                setError(err instanceof Error ? err.message : 'Erro ao criar o projeto. Tente novamente.');
             } finally {
                 setLoading(false);
             }

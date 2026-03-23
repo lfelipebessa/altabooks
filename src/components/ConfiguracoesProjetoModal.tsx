@@ -31,7 +31,7 @@ export const ConfiguracoesProjetoModal: React.FC<ConfiguracoesProjetoModalProps>
     setPaginasMin(projeto.paginas_min);
     setPaginasMax(projeto.paginas_max);
     setError(null);
-  }, [projeto.id]);
+  }, [projeto.id, projeto.qtd_capitulos, projeto.qtd_subcapitulos_min, projeto.qtd_subcapitulos_max, projeto.paginas_min, projeto.paginas_max]);
 
   if (!isOpen) return null;
 
