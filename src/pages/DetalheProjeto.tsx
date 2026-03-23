@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { ProjetoStatus } from '../types';
-import { ArrowLeft, ExternalLink, Loader2 } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Loader2, Settings } from 'lucide-react';
 import { useProjeto } from '../hooks/useProjeto';
 import { useArquivos } from '../hooks/useArquivos';
 import { useSumarios } from '../hooks/useSumarios';
@@ -10,6 +10,7 @@ import { ArquivoCard } from '../components/ArquivoCard';
 import { SumarioCard } from '../components/SumarioCard';
 import { ProgressBar } from '../components/ProgressBar';
 import { EscreverLivroBanner } from '../components/EscreverLivroBanner';
+import { ConfiguracoesProjetoModal } from '../components/ConfiguracoesProjetoModal';
 import logo from '../assets/logo-alta-books.png';
 
 const MOSTRA_EXECUTIVO: readonly ProjetoStatus[] = [
@@ -27,6 +28,7 @@ export const DetalheProjeto: React.FC = () => {
   const { projeto, loading: loadingProjeto, error: errorProjeto } = useProjeto(id);
   const { arquivos, loading: loadingArquivos } = useArquivos(id);
   const { sumarios, loading: loadingSumarios, selecionarSumario } = useSumarios(id);
+  const [showConfiguracoes, setShowConfiguracoes] = useState(false);
 
   if (loadingProjeto) {
     return (
@@ -93,7 +95,14 @@ export const DetalheProjeto: React.FC = () => {
               </h1>
               <p className="text-lg text-gray-600">Autor: {projeto.autor_nome}</p>
             </div>
-            <div className="shrink-0">
+            <div className="flex items-center gap-3 shrink-0">
+              <button
+                onClick={() => setShowConfiguracoes(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-brand-text-main bg-brand-bg-card hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                <Settings className="w-4 h-4" />
+                Configurações
+              </button>
               <StatusBadge status={projeto.status} />
             </div>
           </div>
@@ -216,6 +225,14 @@ export const DetalheProjeto: React.FC = () => {
           </section>
         )}
       </main>
+      {showConfiguracoes && (
+        <ConfiguracoesProjetoModal
+          projeto={projeto}
+          isOpen={showConfiguracoes}
+          onClose={() => setShowConfiguracoes(false)}
+          onSaved={() => setShowConfiguracoes(false)}
+        />
+      )}
     </div>
   );
 };
