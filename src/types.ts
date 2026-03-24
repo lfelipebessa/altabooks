@@ -7,7 +7,7 @@ export type ArquivoTipo = 'video' | 'audio' | 'pdf' | 'texto' | 'imagem'
 export type ArquivoStatus = 'pendente' | 'processado' | 'erro'
 export type SumarioAbordagem = 'cronologica' | 'tematica' | 'narrativa'
 
-export interface Capitulo { numero: number; titulo: string; descricao: string }
+export interface Capitulo { numero: number; titulo: string; descricao: string; subassuntos?: string[] }
 
 export interface Projeto {
   id: string; nome_projeto: string; autor_nome: string

@@ -78,6 +78,19 @@ export const SumarioCard: React.FC<SumarioCardProps> = ({ sumario, onSelecionar 
                   <p className="text-gray-600 mt-1 leading-relaxed">
                     {cap.descricao}
                   </p>
+                  {cap.subassuntos && cap.subassuntos.length > 0 && (
+                    <div className="mt-2">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Subassuntos</span>
+                    <ul className="mt-1 space-y-1">
+                      {cap.subassuntos.map((sub, i) => (
+                        <li key={i} className="flex items-start gap-2 text-gray-500">
+                          <span className="mt-1.5 w-1 h-1 rounded-full bg-brand-primary/60 shrink-0" />
+                          {sub}
+                        </li>
+                      ))}
+                    </ul>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
