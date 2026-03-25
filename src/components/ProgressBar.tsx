@@ -12,8 +12,8 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ current, total, label 
     return (
         <div className="w-full mt-3">
             <div className="flex justify-between text-xs mb-1 text-brand-text-body">
-                <span>{label}</span>
-                <span className="font-semibold">{current} de {total} ({percentage}%)</span>
+                {label && <span>{label}</span>}
+                <span className="font-semibold ml-auto">{percentage}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
                 <div

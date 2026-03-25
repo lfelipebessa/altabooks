@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { ProjetoStatus } from '../types';
-import { ArrowLeft, ExternalLink, Loader2, Settings } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Loader2, Settings, Check, AlertCircle } from 'lucide-react';
 import { useProjeto } from '../hooks/useProjeto';
 import { useArquivos } from '../hooks/useArquivos';
 import { useSumarios } from '../hooks/useSumarios';
@@ -21,10 +21,90 @@ const MOSTRA_SUMARIOS: readonly ProjetoStatus[] = [
   'gerando_sumarios', 'aguardando_aprovacao', 'escrevendo_livro', 'concluido',
 ] as const
 
+const PIPELINE_STAGES: { key: ProjetoStatus; label: string }[] = [
+  { key: 'aguardando', label: 'Fila' },
+  { key: 'analisando_materiais', label: 'Análise' },
+  { key: 'gerando_executivo', label: 'Executivo' },
+  { key: 'gerando_sumarios', label: 'Sumários' },
+  { key: 'aguardando_aprovacao', label: 'Aprovação' },
+  { key: 'escrevendo_livro', label: 'Escrita' },
+  { key: 'concluido', label: 'Concluído' },
+];
+
+const PROCESSING_STATUSES = new Set<ProjetoStatus>([
+  'analisando_materiais', 'gerando_executivo', 'gerando_sumarios', 'escrevendo_livro',
+]);
+
+const ProjectPipeline: React.FC<{ status: ProjetoStatus }> = ({ status }) => {
+  const isError = status === 'erro';
+  const currentIdx = isError ? -1 : PIPELINE_STAGES.findIndex(s => s.key === status);
+  const isProcessing = PROCESSING_STATUSES.has(status);
+
+  return (
+    <div className="w-full overflow-x-auto">
+      <div className="flex items-start pb-1" style={{ minWidth: 'max-content' }}>
+        {PIPELINE_STAGES.map((stage, i) => {
+          const isCompleted = !isError && i < currentIdx;
+          const isActive = !isError && i === currentIdx;
+          const isPending = isError || i > currentIdx;
+
+          return (
+            <React.Fragment key={stage.key}>
+              {i > 0 && (
+                <div className="flex items-center self-start mt-[13px] mx-1.5">
+                  <div
+                    className={`h-px w-8 transition-colors duration-500 ${
+                      isCompleted || (isActive && i > 0) ? 'bg-brand-primary' : 'bg-gray-200'
+                    }`}
+                  />
+                </div>
+              )}
+              <div className="flex flex-col items-center gap-1.5" style={{ width: '3.5rem' }}>
+                <div
+                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300
+                    ${isCompleted ? 'bg-[#111] text-[#F5C518]' : ''}
+                    ${isActive ? `bg-brand-primary text-[#111] ring-2 ring-brand-primary/25 ring-offset-2 ${isProcessing ? 'animate-pulse' : ''}` : ''}
+                    ${isPending ? 'bg-gray-100 text-gray-400 border border-gray-200' : ''}
+                  `}
+                >
+                  {isCompleted ? <Check className="w-3.5 h-3.5" strokeWidth={2.5} /> : <span>{i + 1}</span>}
+                </div>
+                <span
+                  className={`text-[10px] text-center leading-tight transition-colors
+                    ${isCompleted ? 'text-gray-500 font-medium' : ''}
+                    ${isActive ? 'text-brand-text-main font-bold' : ''}
+                    ${isPending ? 'text-gray-400' : ''}
+                  `}
+                >
+                  {stage.label}
+                </span>
+              </div>
+            </React.Fragment>
+          );
+        })}
+
+        {isError && (
+          <>
+            <div className="flex items-center self-start mt-[13px] mx-1.5">
+              <div className="h-px w-8 bg-red-200" />
+            </div>
+            <div className="flex flex-col items-center gap-1.5" style={{ width: '3.5rem' }}>
+              <div className="w-7 h-7 rounded-full bg-red-100 text-red-500 flex items-center justify-center border border-red-200">
+                <AlertCircle className="w-3.5 h-3.5" />
+              </div>
+              <span className="text-[10px] text-center font-medium text-red-500">Erro</span>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const DetalheProjeto: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  
+
   const { projeto, loading: loadingProjeto, error: errorProjeto } = useProjeto(id);
   const { arquivos, loading: loadingArquivos } = useArquivos(id);
   const { sumarios, loading: loadingSumarios, selecionarSumario } = useSumarios(id);
@@ -43,7 +123,7 @@ export const DetalheProjeto: React.FC = () => {
       <div className="min-h-screen bg-brand-bg-section flex flex-col items-center justify-center p-6">
         <div className="bg-red-50 text-red-700 p-6 rounded-xl border border-red-100 max-w-md w-full text-center">
           <p className="font-semibold mb-4">{errorProjeto || 'Projeto não encontrado'}</p>
-          <button 
+          <button
             onClick={() => navigate('/')}
             className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-white text-red-700 font-medium rounded border border-red-200 hover:bg-red-50 transition-colors"
           >
@@ -63,132 +143,144 @@ export const DetalheProjeto: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-brand-bg-section pb-20">
-      {/* Header Fixo Tipo TopBar */}
-      <header className="fixed top-0 left-0 right-0 h-[80px] bg-[#111111] z-40 flex items-center justify-between px-[32px] shadow-md">
-        <div className="flex items-center">
-          <img src={logo} alt="Alta Books" className="h-[48px] w-auto brightness-0 invert" />
-        </div>
+      {/* Header */}
+      <header className="fixed top-0 left-0 right-0 h-[72px] bg-[#111111] z-40 flex items-center justify-between px-8 shadow-md">
+        <img src={logo} alt="Alta Books" className="h-[42px] w-auto brightness-0 invert" />
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-white hover:text-[#F5C518] font-medium py-1.5 px-3 rounded transition-colors text-sm"
+          className="flex items-center gap-2 text-gray-400 hover:text-[#F5C518] font-medium py-1.5 px-3 rounded transition-colors text-sm"
         >
           <ArrowLeft className="w-4 h-4" />
-          Voltar à listagem
+          Todos os projetos
         </button>
       </header>
 
-      <main className="max-w-4xl mx-auto px-6 pt-32 space-y-8">
-        {/* Banner: Escrever Livro */}
-        {projeto.status === 'aguardando_aprovacao' && (
-          <EscreverLivroBanner
-            projetoId={projeto.id}
-            driveExecutivoUrl={projeto.drive_executivo_url}
-          />
-        )}
+      <main className="max-w-4xl mx-auto px-6 pt-[100px] space-y-6">
 
-        {/* Seção: Header do Projeto */}
-        <section className="bg-brand-bg rounded-2xl p-8 border border-gray-200 shadow-sm">
-          <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-6">
-            <div>
-              <h1 className="font-serif text-3xl font-bold text-brand-text-main mb-2">
+        {/* Project Hero */}
+        <section className="bg-brand-bg rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="h-1 bg-brand-primary" />
+          <div className="p-8">
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-2">
+              <h1 className="font-serif text-[2rem] md:text-[2.4rem] font-bold text-brand-text-main leading-tight">
                 {projeto.nome_projeto}
               </h1>
-              <p className="text-lg text-gray-600">Autor: {projeto.autor_nome}</p>
+              <div className="flex items-center gap-2 shrink-0 md:mt-1">
+                <button
+                  onClick={() => setShowConfiguracoes(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-brand-text-main bg-brand-bg-card hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span className="hidden sm:inline">Configurações</span>
+                </button>
+                <StatusBadge status={projeto.status} />
+              </div>
             </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <button
-                onClick={() => setShowConfiguracoes(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-brand-text-main bg-brand-bg-card hover:bg-gray-200 rounded-lg transition-colors"
-              >
-                <Settings className="w-4 h-4" />
-                Configurações
-              </button>
-              <StatusBadge status={projeto.status} />
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8 text-sm border-t border-gray-100 pt-6">
-            <div>
-              <span className="text-gray-500 block mb-1">Criado em</span>
-              <span className="font-medium text-gray-900">
-                {new Date(projeto.created_at).toLocaleString('pt-BR')}
+
+            <p className="text-sm uppercase tracking-widest text-gray-400 font-medium mb-6">
+              por{' '}
+              <span className="normal-case tracking-normal font-semibold text-base text-gray-700">
+                {projeto.autor_nome}
               </span>
-            </div>
-            <div>
-              <span className="text-gray-500 block mb-1">Atualizado em</span>
-              <span className="font-medium text-gray-900">
-                {projeto.updated_at ? new Date(projeto.updated_at).toLocaleString('pt-BR') : '-'}
+            </p>
+
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-gray-500 border-t border-gray-100 pt-5 mb-7">
+              <span>
+                Criado em{' '}
+                <span className="font-medium text-gray-800">
+                  {new Date(projeto.created_at).toLocaleDateString('pt-BR')}
+                </span>
               </span>
-            </div>
-            {projeto.drive_url && (
-              <div className="sm:col-span-2 pt-2">
-                <a 
+              {projeto.updated_at && (
+                <span>
+                  · Atualizado em{' '}
+                  <span className="font-medium text-gray-800">
+                    {new Date(projeto.updated_at).toLocaleDateString('pt-BR')}
+                  </span>
+                </span>
+              )}
+              {projeto.drive_url && (
+                <a
                   href={projeto.drive_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-brand-primary font-medium hover:text-brand-hover hover:underline"
+                  className="inline-flex items-center gap-1 text-brand-primary font-medium hover:text-brand-hover hover:underline ml-auto"
                 >
-                  <ExternalLink className="w-4 h-4" />
-                  Abrir Pasta no Drive
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Pasta no Drive
                 </a>
-              </div>
-            )}
+              )}
+            </div>
+
+            <ProjectPipeline status={projeto.status} />
           </div>
         </section>
 
-        {/* Seção: Arquivos Processados */}
+        {/* Arquivos Processados */}
         <section>
-          <h2 className="font-serif text-2xl font-bold text-brand-text-main mb-6">Arquivos Processados</h2>
-          
-          <div className="bg-brand-bg rounded-2xl p-6 md:p-8 border border-gray-200 shadow-sm mb-6">
-            <div className="mb-6">
-              <ProgressBar 
-                current={arquivosProcessadosCount} 
-                total={arquivosTotalCount} 
+          <h2 className="font-serif text-xl font-bold text-brand-text-main mb-4 flex items-center gap-2.5">
+            <span className="w-0.5 h-5 rounded-full bg-brand-primary inline-block shrink-0" />
+            Arquivos Processados
+          </h2>
+
+          <div className="bg-brand-bg rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="px-6 pt-5 pb-4 border-b border-gray-100">
+              <ProgressBar
+                current={arquivosProcessadosCount}
+                total={arquivosTotalCount}
                 label={`${arquivosProcessadosCount} de ${arquivosTotalCount} arquivos processados`}
               />
             </div>
 
-            {loadingArquivos ? (
-              <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
-            ) : arquivos.length > 0 ? (
-              <div className="space-y-3">
-                {arquivos.map(arq => (
-                  <ArquivoCard key={arq.id} arquivo={arq} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500">Nenhum arquivo encontrado para este projeto.</div>
-            )}
+            <div className="p-4">
+              {loadingArquivos ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                </div>
+              ) : arquivos.length > 0 ? (
+                <div className="space-y-2">
+                  {arquivos.map(arq => (
+                    <ArquivoCard key={arq.id} arquivo={arq} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-400 text-sm">
+                  Nenhum arquivo encontrado para este projeto.
+                </div>
+              )}
+            </div>
           </div>
         </section>
 
-        {/* Seção: Projeto Executivo */}
+        {/* Projeto Executivo */}
         {showExecutivo && (
           <section>
-            <h2 className="font-serif text-2xl font-bold text-brand-text-main mb-6">Projeto Executivo</h2>
-            <div className="bg-brand-bg rounded-2xl p-6 md:p-8 border border-gray-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <h2 className="font-serif text-xl font-bold text-brand-text-main mb-4 flex items-center gap-2.5">
+              <span className="w-0.5 h-5 rounded-full bg-brand-primary inline-block shrink-0" />
+              Projeto Executivo
+            </h2>
+            <div className="bg-brand-bg rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <h3 className="font-bold text-brand-text-main mb-1">Documento Executivo</h3>
-                <p className="text-sm text-gray-600">
-                  {projeto.drive_executivo_url 
-                    ? 'O projeto executivo foi gerado com sucesso.' 
+                <h3 className="font-semibold text-brand-text-main mb-1">Documento Executivo</h3>
+                <p className="text-sm text-gray-500">
+                  {projeto.drive_executivo_url
+                    ? 'Gerado com sucesso — pronto para revisão.'
                     : 'Sendo gerado... aguarde.'}
                 </p>
               </div>
-              
+
               {projeto.drive_executivo_url ? (
-                <a 
+                <a
                   href={projeto.drive_executivo_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-5 py-2.5 bg-brand-primary hover:bg-brand-hover text-brand-text-main font-bold rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-brand-primary hover:bg-brand-hover text-brand-text-main font-bold rounded-lg transition-colors shrink-0"
                 >
                   <ExternalLink className="w-4 h-4" />
-                  Abrir Projeto Executivo
+                  Abrir Executivo
                 </a>
               ) : (
-                <div className="px-5 py-2.5 bg-brand-bg-badge border border-brand-primary/30 text-amber-800 font-medium rounded-lg flex items-center gap-2">
+                <div className="px-5 py-2.5 bg-brand-bg-badge border border-brand-primary/30 text-amber-800 font-medium rounded-lg flex items-center gap-2 shrink-0">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Processando
                 </div>
@@ -197,11 +289,14 @@ export const DetalheProjeto: React.FC = () => {
           </section>
         )}
 
-        {/* Seção: Sumários */}
+        {/* Sumários */}
         {showSumarios && (
           <section>
-            <h2 className="font-serif text-2xl font-bold text-brand-text-main mb-6">Sumários</h2>
-            
+            <h2 className="font-serif text-xl font-bold text-brand-text-main mb-4 flex items-center gap-2.5">
+              <span className="w-0.5 h-5 rounded-full bg-brand-primary inline-block shrink-0" />
+              Sumários
+            </h2>
+
             {loadingSumarios ? (
               <div className="bg-brand-bg rounded-2xl p-8 border border-gray-200 shadow-sm flex justify-center">
                 <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
@@ -209,22 +304,33 @@ export const DetalheProjeto: React.FC = () => {
             ) : sumarios.length > 0 ? (
               <div className="space-y-4">
                 {sumarios.map(sumario => (
-                  <SumarioCard 
-                    key={sumario.id} 
-                    sumario={sumario} 
-                    onSelecionar={selecionarSumario} 
+                  <SumarioCard
+                    key={sumario.id}
+                    sumario={sumario}
+                    onSelecionar={selecionarSumario}
                   />
                 ))}
               </div>
             ) : (
-              <div className="bg-brand-bg rounded-2xl p-8 border border-gray-200 shadow-sm text-center text-gray-500 flex flex-col items-center">
-                <Loader2 className="w-6 h-6 animate-spin text-brand-primary mb-3" />
-                Sumários sendo gerados...
+              <div className="bg-brand-bg rounded-2xl p-10 border border-gray-200 shadow-sm text-center flex flex-col items-center gap-3">
+                <Loader2 className="w-6 h-6 animate-spin text-brand-primary" />
+                <span className="text-sm text-gray-400">Sumários sendo gerados...</span>
               </div>
             )}
           </section>
         )}
+
+        {/* Escrever Livro Banner — after sumários, where it logically belongs */}
+        {projeto.status === 'aguardando_aprovacao' && (
+          <EscreverLivroBanner
+            projetoId={projeto.id}
+            driveExecutivoUrl={projeto.drive_executivo_url}
+            temSumarioSelecionado={sumarios.some(s => s.selecionado)}
+          />
+        )}
+
       </main>
+
       {showConfiguracoes && (
         <ConfiguracoesProjetoModal
           projeto={projeto}

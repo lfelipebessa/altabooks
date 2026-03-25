@@ -16,31 +16,41 @@ export const ConfiguracoesProjetoModal: React.FC<ConfiguracoesProjetoModalProps>
   onClose,
   onSaved,
 }) => {
-  const [qtdCapitulos, setQtdCapitulos] = useState(projeto.qtd_capitulos);
-  const [subcapitulosMin, setSubcapitulosMin] = useState(projeto.qtd_subcapitulos_min);
-  const [subcapitulosMax, setSubcapitulosMax] = useState(projeto.qtd_subcapitulos_max);
-  const [paginasMin, setPaginasMin] = useState(projeto.paginas_min);
-  const [paginasMax, setPaginasMax] = useState(projeto.paginas_max);
+  const [qtdCapitulos, setQtdCapitulos] = useState(String(projeto.qtd_capitulos));
+  const [subcapitulosMin, setSubcapitulosMin] = useState(String(projeto.qtd_subcapitulos_min));
+  const [subcapitulosMax, setSubcapitulosMax] = useState(String(projeto.qtd_subcapitulos_max));
+  const [paginasMin, setPaginasMin] = useState(String(projeto.paginas_min));
+  const [paginasMax, setPaginasMax] = useState(String(projeto.paginas_max));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setQtdCapitulos(projeto.qtd_capitulos);
-    setSubcapitulosMin(projeto.qtd_subcapitulos_min);
-    setSubcapitulosMax(projeto.qtd_subcapitulos_max);
-    setPaginasMin(projeto.paginas_min);
-    setPaginasMax(projeto.paginas_max);
+    setQtdCapitulos(String(projeto.qtd_capitulos));
+    setSubcapitulosMin(String(projeto.qtd_subcapitulos_min));
+    setSubcapitulosMax(String(projeto.qtd_subcapitulos_max));
+    setPaginasMin(String(projeto.paginas_min));
+    setPaginasMax(String(projeto.paginas_max));
     setError(null);
   }, [projeto.id, projeto.qtd_capitulos, projeto.qtd_subcapitulos_min, projeto.qtd_subcapitulos_max, projeto.paginas_min, projeto.paginas_max]);
 
   if (!isOpen) return null;
 
   const handleSave = async () => {
-    if (subcapitulosMax < subcapitulosMin) {
+    const cap = parseInt(qtdCapitulos, 10);
+    const subMin = parseInt(subcapitulosMin, 10);
+    const subMax = parseInt(subcapitulosMax, 10);
+    const pagMin = parseInt(paginasMin, 10);
+    const pagMax = parseInt(paginasMax, 10);
+
+    if (!cap || !subMin || !subMax || !pagMin || !pagMax) {
+      setError('Preencha todos os campos com valores válidos.');
+      return;
+    }
+    if (subMax < subMin) {
       setError('Subcapítulos máximo deve ser maior ou igual ao mínimo.');
       return;
     }
-    if (paginasMax < paginasMin) {
+    if (pagMax < pagMin) {
       setError('Páginas máximo deve ser maior ou igual ao mínimo.');
       return;
     }
@@ -52,11 +62,11 @@ export const ConfiguracoesProjetoModal: React.FC<ConfiguracoesProjetoModalProps>
       const { error: updateError } = await supabase
         .from('projetos')
         .update({
-          qtd_capitulos: qtdCapitulos,
-          qtd_subcapitulos_min: subcapitulosMin,
-          qtd_subcapitulos_max: subcapitulosMax,
-          paginas_min: paginasMin,
-          paginas_max: paginasMax,
+          qtd_capitulos: cap,
+          qtd_subcapitulos_min: subMin,
+          qtd_subcapitulos_max: subMax,
+          paginas_min: pagMin,
+          paginas_max: pagMax,
         })
         .eq('id', projeto.id);
 
@@ -112,10 +122,10 @@ export const ConfiguracoesProjetoModal: React.FC<ConfiguracoesProjetoModalProps>
               Número de Capítulos
             </label>
             <input
-              type="number" min={1} max={30} disabled={loading}
+              type="text" inputMode="numeric" disabled={loading}
               className={inputClass}
               value={qtdCapitulos}
-              onChange={(e) => setQtdCapitulos(e.target.valueAsNumber || projeto.qtd_capitulos)}
+              onChange={(e) => setQtdCapitulos(e.target.value.replace(/\D/g, ''))}
             />
           </div>
 
@@ -128,20 +138,20 @@ export const ConfiguracoesProjetoModal: React.FC<ConfiguracoesProjetoModalProps>
               <div className="flex-1">
                 <span className="text-xs text-gray-500 mb-1 block">Mínimo</span>
                 <input
-                  type="number" min={1} max={20} disabled={loading}
+                  type="text" inputMode="numeric" disabled={loading}
                   className={inputClass}
                   value={subcapitulosMin}
-                  onChange={(e) => setSubcapitulosMin(e.target.valueAsNumber || projeto.qtd_subcapitulos_min)}
+                  onChange={(e) => setSubcapitulosMin(e.target.value.replace(/\D/g, ''))}
                 />
               </div>
               <span className="text-gray-400 pt-5">–</span>
               <div className="flex-1">
                 <span className="text-xs text-gray-500 mb-1 block">Máximo</span>
                 <input
-                  type="number" min={1} max={20} disabled={loading}
+                  type="text" inputMode="numeric" disabled={loading}
                   className={inputClass}
                   value={subcapitulosMax}
-                  onChange={(e) => setSubcapitulosMax(e.target.valueAsNumber || projeto.qtd_subcapitulos_max)}
+                  onChange={(e) => setSubcapitulosMax(e.target.value.replace(/\D/g, ''))}
                 />
               </div>
             </div>
@@ -156,20 +166,20 @@ export const ConfiguracoesProjetoModal: React.FC<ConfiguracoesProjetoModalProps>
               <div className="flex-1">
                 <span className="text-xs text-gray-500 mb-1 block">Mínimo</span>
                 <input
-                  type="number" min={1} disabled={loading}
+                  type="text" inputMode="numeric" disabled={loading}
                   className={inputClass}
                   value={paginasMin}
-                  onChange={(e) => setPaginasMin(e.target.valueAsNumber || projeto.paginas_min)}
+                  onChange={(e) => setPaginasMin(e.target.value.replace(/\D/g, ''))}
                 />
               </div>
               <span className="text-gray-400 pt-5">–</span>
               <div className="flex-1">
                 <span className="text-xs text-gray-500 mb-1 block">Máximo</span>
                 <input
-                  type="number" min={1} disabled={loading}
+                  type="text" inputMode="numeric" disabled={loading}
                   className={inputClass}
                   value={paginasMax}
-                  onChange={(e) => setPaginasMax(e.target.valueAsNumber || projeto.paginas_max)}
+                  onChange={(e) => setPaginasMax(e.target.value.replace(/\D/g, ''))}
                 />
               </div>
             </div>

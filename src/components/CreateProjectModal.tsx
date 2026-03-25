@@ -18,11 +18,11 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showConfig, setShowConfig] = useState(false);
-    const [qtdCapitulos, setQtdCapitulos] = useState(12);
-    const [subcapitulosMin, setSubcapitulosMin] = useState(6);
-    const [subcapitulosMax, setSubcapitulosMax] = useState(8);
-    const [paginasMin, setPaginasMin] = useState(180);
-    const [paginasMax, setPaginasMax] = useState(205);
+    const [qtdCapitulos, setQtdCapitulos] = useState('12');
+    const [subcapitulosMin, setSubcapitulosMin] = useState('6');
+    const [subcapitulosMax, setSubcapitulosMax] = useState('8');
+    const [paginasMin, setPaginasMin] = useState('180');
+    const [paginasMax, setPaginasMax] = useState('205');
 
     if (!isOpen) return null;
 
@@ -31,16 +31,23 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
-        if (subcapitulosMax < subcapitulosMin) {
+
+        const cap = parseInt(qtdCapitulos, 10);
+        const subMin = parseInt(subcapitulosMin, 10);
+        const subMax = parseInt(subcapitulosMax, 10);
+        const pagMin = parseInt(paginasMin, 10);
+        const pagMax = parseInt(paginasMax, 10);
+
+        if (!cap || !subMin || !subMax || !pagMin || !pagMax) {
+            setError('Preencha todos os campos de configuração com valores válidos.');
+            return;
+        }
+        if (subMax < subMin) {
             setError('Subcapítulos máximo deve ser maior ou igual ao mínimo.');
             return;
         }
-        if (paginasMax < paginasMin) {
+        if (pagMax < pagMin) {
             setError('Páginas máximo deve ser maior ou igual ao mínimo.');
-            return;
-        }
-        if (qtdCapitulos < 1 || qtdCapitulos > 30) {
-            setError('Número de capítulos deve ser entre 1 e 30.');
             return;
         }
         if (isFormValid) {
@@ -53,11 +60,11 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                         projectName: name,
                         authorName: author,
                         driveLink,
-                        qtdCapitulos,
-                        qtdSubcapitulosMin: subcapitulosMin,
-                        qtdSubcapitulosMax: subcapitulosMax,
-                        paginasMin,
-                        paginasMax,
+                        qtdCapitulos: cap,
+                        qtdSubcapitulosMin: subMin,
+                        qtdSubcapitulosMax: subMax,
+                        paginasMin: pagMin,
+                        paginasMax: pagMax,
                     }),
                 });
 
@@ -68,11 +75,11 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 setName('');
                 setAuthor('');
                 setDriveLink('');
-                setQtdCapitulos(12);
-                setSubcapitulosMin(6);
-                setSubcapitulosMax(8);
-                setPaginasMin(180);
-                setPaginasMax(205);
+                setQtdCapitulos('12');
+                setSubcapitulosMin('6');
+                setSubcapitulosMax('8');
+                setPaginasMin('180');
+                setPaginasMax('205');
                 setShowConfig(false);
                 onSuccess();
                 onClose();
@@ -182,10 +189,10 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                         Número de Capítulos
                                     </label>
                                     <input
-                                        type="number" min={1} max={30} disabled={loading}
+                                        type="text" inputMode="numeric" disabled={loading}
                                         className="w-full px-4 py-2 bg-brand-bg border border-brand-bg-card rounded-lg focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors text-brand-text-main"
                                         value={qtdCapitulos}
-                                        onChange={(e) => setQtdCapitulos(e.target.valueAsNumber || 12)}
+                                        onChange={(e) => setQtdCapitulos(e.target.value.replace(/\D/g, ''))}
                                     />
                                 </div>
 
@@ -197,20 +204,20 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                         <div className="flex-1">
                                             <span className="text-xs text-gray-500 mb-1 block">Mínimo</span>
                                             <input
-                                                type="number" min={1} max={20} disabled={loading}
+                                                type="text" inputMode="numeric" disabled={loading}
                                                 className="w-full px-4 py-2 bg-brand-bg border border-brand-bg-card rounded-lg focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors text-brand-text-main"
                                                 value={subcapitulosMin}
-                                                onChange={(e) => setSubcapitulosMin(e.target.valueAsNumber || 6)}
+                                                onChange={(e) => setSubcapitulosMin(e.target.value.replace(/\D/g, ''))}
                                             />
                                         </div>
                                         <span className="text-gray-400 pt-5">–</span>
                                         <div className="flex-1">
                                             <span className="text-xs text-gray-500 mb-1 block">Máximo</span>
                                             <input
-                                                type="number" min={1} max={20} disabled={loading}
+                                                type="text" inputMode="numeric" disabled={loading}
                                                 className="w-full px-4 py-2 bg-brand-bg border border-brand-bg-card rounded-lg focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors text-brand-text-main"
                                                 value={subcapitulosMax}
-                                                onChange={(e) => setSubcapitulosMax(e.target.valueAsNumber || 8)}
+                                                onChange={(e) => setSubcapitulosMax(e.target.value.replace(/\D/g, ''))}
                                             />
                                         </div>
                                     </div>
@@ -224,20 +231,20 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                         <div className="flex-1">
                                             <span className="text-xs text-gray-500 mb-1 block">Mínimo</span>
                                             <input
-                                                type="number" min={1} disabled={loading}
+                                                type="text" inputMode="numeric" disabled={loading}
                                                 className="w-full px-4 py-2 bg-brand-bg border border-brand-bg-card rounded-lg focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors text-brand-text-main"
                                                 value={paginasMin}
-                                                onChange={(e) => setPaginasMin(e.target.valueAsNumber || 180)}
+                                                onChange={(e) => setPaginasMin(e.target.value.replace(/\D/g, ''))}
                                             />
                                         </div>
                                         <span className="text-gray-400 pt-5">–</span>
                                         <div className="flex-1">
                                             <span className="text-xs text-gray-500 mb-1 block">Máximo</span>
                                             <input
-                                                type="number" min={1} disabled={loading}
+                                                type="text" inputMode="numeric" disabled={loading}
                                                 className="w-full px-4 py-2 bg-brand-bg border border-brand-bg-card rounded-lg focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors text-brand-text-main"
                                                 value={paginasMax}
-                                                onChange={(e) => setPaginasMax(e.target.valueAsNumber || 205)}
+                                                onChange={(e) => setPaginasMax(e.target.value.replace(/\D/g, ''))}
                                             />
                                         </div>
                                     </div>
