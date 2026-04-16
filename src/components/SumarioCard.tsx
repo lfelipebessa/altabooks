@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ExternalLink, ChevronDown, ChevronUp, Check, Loader2, Pencil, X } from 'lucide-react';
 import type { Sumario, Capitulo } from '../types';
 
@@ -22,6 +22,13 @@ export const SumarioCard: React.FC<SumarioCardProps> = ({ sumario, onSelecionar,
   const [editCapitulos, setEditCapitulos] = useState<Capitulo[]>(sumario.capitulos ?? []);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!editMode) {
+      setEditTitulo(sumario.titulo_sumario ?? '');
+      setEditCapitulos(sumario.capitulos ?? []);
+    }
+  }, [sumario, editMode]);
 
   const handleSelecionar = async () => {
     setSelecting(true);
