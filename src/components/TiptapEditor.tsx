@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Bold, Italic, List, ListOrdered } from 'lucide-react';
@@ -8,36 +8,51 @@ interface TiptapEditorProps {
   onChange: (html: string) => void;
 }
 
+interface ToolbarBtnProps {
+  onClick: () => void;
+  active: boolean;
+  children: React.ReactNode;
+  title: string;
+}
+
+const ToolbarBtn: React.FC<ToolbarBtnProps> = ({ onClick, active, children, title }) => (
+  <button
+    type="button"
+    title={title}
+    onMouseDown={e => { e.preventDefault(); onClick(); }}
+    className={`p-1.5 rounded transition-colors ${
+      active
+        ? 'bg-brand-primary text-brand-text-main'
+        : 'text-gray-600 hover:bg-gray-100'
+    }`}
+  >
+    {children}
+  </button>
+);
+
 export const TiptapEditor: React.FC<TiptapEditorProps> = ({ content, onChange }) => {
+  const onChangeRef = React.useRef(onChange);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
   const editor = useEditor({
     extensions: [StarterKit],
     content,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      onChangeRef.current(editor.getHTML());
     },
   });
 
-  if (!editor) return null;
+  useEffect(() => {
+    if (!editor) return;
+    if (editor.getHTML() !== content) {
+      editor.commands.setContent(content);
+    }
+  }, [editor, content]);
 
-  const ToolbarBtn: React.FC<{
-    onClick: () => void;
-    active: boolean;
-    children: React.ReactNode;
-    title: string;
-  }> = ({ onClick, active, children, title }) => (
-    <button
-      type="button"
-      title={title}
-      onMouseDown={e => { e.preventDefault(); onClick(); }}
-      className={`p-1.5 rounded transition-colors ${
-        active
-          ? 'bg-brand-primary text-brand-text-main'
-          : 'text-gray-600 hover:bg-gray-100'
-      }`}
-    >
-      {children}
-    </button>
-  );
+  if (!editor) return null;
 
   return (
     <div className="border border-gray-200 rounded-xl overflow-hidden">
