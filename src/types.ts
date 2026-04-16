@@ -12,6 +12,7 @@ export interface Capitulo { numero: number; titulo: string; descricao: string; s
 export interface Projeto {
   id: string; nome_projeto: string; autor_nome: string
   drive_url: string | null; drive_executivo_url: string | null
+  conteudo_executivo: string | null
   status: ProjetoStatus; created_at: string; updated_at: string | null
   qtd_capitulos: number
   qtd_subcapitulos_min: number
@@ -38,5 +39,6 @@ export interface Sumario {
   abordagem: SumarioAbordagem; titulo_sumario: string | null
   capitulos: Capitulo[] | null; drive_doc_id: string | null
   drive_url: string | null; selecionado: boolean
+  conteudo: string | null
   created_at: string; updated_at: string | null
 }
