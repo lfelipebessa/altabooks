@@ -31,7 +31,7 @@ export function useArquivos(projetoId: string | undefined) {
         return
       }
 
-      const ids = arquivosData.map((a: any) => a.id)
+      const ids = arquivosData.map((a: Arquivo) => a.id)
 
       const { data: transcricoesData, error: transcricoesError } = await supabase
         .from('transcricoes_resumos')
@@ -42,19 +42,19 @@ export function useArquivos(projetoId: string | undefined) {
 
       const transcricoesMap = new Map<string, TranscricaoResumo>()
       if (transcricoesData) {
-        transcricoesData.forEach((t: any) => {
-          transcricoesMap.set(t.arquivo_id, t as TranscricaoResumo)
+        transcricoesData.forEach((t: TranscricaoResumo) => {
+          transcricoesMap.set(t.arquivo_id, t)
         })
       }
 
-      const arquivosComTranscricao: ArquivoComTranscricao[] = arquivosData.map((a: any) => ({
+      const arquivosComTranscricao: ArquivoComTranscricao[] = arquivosData.map((a: Arquivo) => ({
         ...a,
         transcricao: transcricoesMap.get(a.id) || null
       }))
 
       setArquivos(arquivosComTranscricao)
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Erro ao carregar arquivos')
     } finally {
       setLoading(false)
     }

@@ -57,6 +57,7 @@ export function useProjeto(id: string | undefined) {
       .update({ conteudo_executivo: html })
       .eq('id', id)
     if (error) throw error
+    setProjeto(prev => prev ? { ...prev, conteudo_executivo: html } : prev)
   }, [id])
 
   return { projeto, loading, error, salvarExecutivo }

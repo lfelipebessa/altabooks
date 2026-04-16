@@ -117,7 +117,10 @@ export const ExecutivoPanel: React.FC<ExecutivoPanelProps> = ({
           )}
 
           <button
-            onClick={() => setExpanded(v => !v)}
+            onClick={() => {
+              if (expanded) handleExitEdit();
+              setExpanded(v => !v);
+            }}
             className="flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg bg-brand-bg-card text-gray-600 hover:bg-brand-primary hover:text-brand-text-main transition-all"
           >
             {expanded
