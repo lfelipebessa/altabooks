@@ -108,7 +108,7 @@ export const DetalheProjeto: React.FC = () => {
 
   const { projeto, loading: loadingProjeto, error: errorProjeto, salvarExecutivo } = useProjeto(id);
   const { arquivos, loading: loadingArquivos } = useArquivos(id);
-  const { sumarios, loading: loadingSumarios, selecionarSumario } = useSumarios(id);
+  const { sumarios, loading: loadingSumarios, selecionarSumario, atualizarSumario } = useSumarios(id);
   const [showConfiguracoes, setShowConfiguracoes] = useState(false);
   const [arquivosExpanded, setArquivosExpanded] = useState(false);
 
@@ -301,6 +301,7 @@ export const DetalheProjeto: React.FC = () => {
                     key={sumario.id}
                     sumario={sumario}
                     onSelecionar={selecionarSumario}
+                    onAtualizar={atualizarSumario}
                   />
                 ))}
               </div>

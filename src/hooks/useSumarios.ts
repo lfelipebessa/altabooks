@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import type { Sumario } from '../types'
+import type { Sumario, Capitulo } from '../types'
 
 export function useSumarios(projetoId: string | undefined) {
   const [sumarios, setSumarios] = useState<Sumario[]>([])
@@ -36,7 +36,6 @@ export function useSumarios(projetoId: string | undefined) {
     if (!projetoId) return
 
     try {
-      // 1. Desmarca todos do projeto no banco
       const { error: err1 } = await supabase
         .from('sumarios')
         .update({ selecionado: false })
@@ -44,7 +43,6 @@ export function useSumarios(projetoId: string | undefined) {
 
       if (err1) throw err1
 
-      // 2. Marca o escolhido no banco
       const { error: err2 } = await supabase
         .from('sumarios')
         .update({ selecionado: true })
@@ -52,7 +50,6 @@ export function useSumarios(projetoId: string | undefined) {
 
       if (err2) throw err2
 
-      // 3. Atualiza estado local após confirmação do banco
       setSumarios(prev => prev.map(s => ({
         ...s,
         selecionado: s.id === id
@@ -64,5 +61,17 @@ export function useSumarios(projetoId: string | undefined) {
     }
   }, [projetoId, loadSumarios])
 
-  return { sumarios, loading, error, selecionarSumario, refetch: loadSumarios }
+  const atualizarSumario = useCallback(async (
+    id: string,
+    campos: { titulo_sumario?: string; capitulos?: Capitulo[] }
+  ) => {
+    const { error } = await supabase
+      .from('sumarios')
+      .update(campos)
+      .eq('id', id)
+    if (error) throw error
+    setSumarios(prev => prev.map(s => s.id === id ? { ...s, ...campos } : s))
+  }, [])
+
+  return { sumarios, loading, error, selecionarSumario, atualizarSumario, refetch: loadSumarios }
 }
