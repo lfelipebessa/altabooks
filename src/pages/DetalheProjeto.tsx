@@ -1,26 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { ProjetoStatus } from '../types';
-import { ArrowLeft, ExternalLink, Loader2, Settings, Check, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Loader2, Settings, Check, AlertCircle, ChevronDown, ChevronUp, BookOpen, FileText, LayoutList, FolderOpen } from 'lucide-react';
 import { useProjeto } from '../hooks/useProjeto';
 import { useArquivos } from '../hooks/useArquivos';
 import { useSumarios } from '../hooks/useSumarios';
+import { useCapitulos } from '../hooks/useCapitulos';
 import { StatusBadge } from '../components/StatusBadge';
 import { ArquivoCard } from '../components/ArquivoCard';
 import { SumarioCard } from '../components/SumarioCard';
+import { CapituloPanel } from '../components/CapituloPanel';
 import { ProgressBar } from '../components/ProgressBar';
 import { EscreverLivroBanner } from '../components/EscreverLivroBanner';
 import { ConfiguracoesProjetoModal } from '../components/ConfiguracoesProjetoModal';
 import { ExecutivoPanel } from '../components/ExecutivoPanel';
 import logo from '../assets/logo-alta-books.png';
 
-const MOSTRA_EXECUTIVO: readonly ProjetoStatus[] = [
-  'gerando_executivo', 'gerando_sumarios', 'aguardando_aprovacao', 'escrevendo_livro', 'concluido',
-] as const
-
-const MOSTRA_SUMARIOS: readonly ProjetoStatus[] = [
-  'gerando_sumarios', 'aguardando_aprovacao', 'escrevendo_livro', 'concluido',
-] as const
+// ─── Pipeline ────────────────────────────────────────────────────────────────
 
 const PIPELINE_STAGES: { key: ProjetoStatus; label: string }[] = [
   { key: 'aguardando', label: 'Fila' },
@@ -53,30 +49,22 @@ const ProjectPipeline: React.FC<{ status: ProjetoStatus }> = ({ status }) => {
             <React.Fragment key={stage.key}>
               {i > 0 && (
                 <div className="flex items-center self-start mt-[13px] mx-1.5">
-                  <div
-                    className={`h-px w-8 transition-colors duration-500 ${
-                      isCompleted || (isActive && i > 0) ? 'bg-brand-primary' : 'bg-gray-200'
-                    }`}
-                  />
+                  <div className={`h-px w-8 transition-colors duration-500 ${isCompleted || (isActive && i > 0) ? 'bg-brand-primary' : 'bg-gray-200'}`} />
                 </div>
               )}
               <div className="flex flex-col items-center gap-1.5" style={{ width: '3.5rem' }}>
-                <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300
-                    ${isCompleted ? 'bg-[#111] text-[#F5C518]' : ''}
-                    ${isActive ? `bg-brand-primary text-[#111] ring-2 ring-brand-primary/25 ring-offset-2 ${isProcessing ? 'animate-pulse' : ''}` : ''}
-                    ${isPending ? 'bg-gray-100 text-gray-400 border border-gray-200' : ''}
-                  `}
-                >
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300
+                  ${isCompleted ? 'bg-[#111] text-[#F5C518]' : ''}
+                  ${isActive ? `bg-brand-primary text-[#111] ring-2 ring-brand-primary/25 ring-offset-2 ${isProcessing ? 'animate-pulse' : ''}` : ''}
+                  ${isPending ? 'bg-gray-100 text-gray-400 border border-gray-200' : ''}
+                `}>
                   {isCompleted ? <Check className="w-3.5 h-3.5" strokeWidth={2.5} /> : <span>{i + 1}</span>}
                 </div>
-                <span
-                  className={`text-[10px] text-center leading-tight transition-colors
-                    ${isCompleted ? 'text-gray-500 font-medium' : ''}
-                    ${isActive ? 'text-brand-text-main font-bold' : ''}
-                    ${isPending ? 'text-gray-400' : ''}
-                  `}
-                >
+                <span className={`text-[10px] text-center leading-tight transition-colors
+                  ${isCompleted ? 'text-gray-500 font-medium' : ''}
+                  ${isActive ? 'text-brand-text-main font-bold' : ''}
+                  ${isPending ? 'text-gray-400' : ''}
+                `}>
                   {stage.label}
                 </span>
               </div>
@@ -102,6 +90,46 @@ const ProjectPipeline: React.FC<{ status: ProjetoStatus }> = ({ status }) => {
   );
 };
 
+// ─── Tabs ─────────────────────────────────────────────────────────────────────
+
+type TabId = 'materiais' | 'executivo' | 'sumarios' | 'livro';
+
+const TABS: { id: TabId; label: string; icon: React.ReactNode; available: (s: ProjetoStatus) => boolean }[] = [
+  {
+    id: 'materiais',
+    label: 'Materiais',
+    icon: <FolderOpen className="w-4 h-4" />,
+    available: () => true,
+  },
+  {
+    id: 'executivo',
+    label: 'Executivo',
+    icon: <FileText className="w-4 h-4" />,
+    available: s => ['gerando_executivo', 'aguardando_aprovacao', 'escrevendo_livro', 'concluido'].includes(s),
+  },
+  {
+    id: 'sumarios',
+    label: 'Sumários',
+    icon: <LayoutList className="w-4 h-4" />,
+    available: s => ['gerando_sumarios', 'aguardando_aprovacao', 'escrevendo_livro', 'concluido'].includes(s),
+  },
+  {
+    id: 'livro',
+    label: 'Livro',
+    icon: <BookOpen className="w-4 h-4" />,
+    available: s => ['escrevendo_livro', 'concluido'].includes(s),
+  },
+];
+
+const getInitialTab = (status: ProjetoStatus): TabId => {
+  if (['escrevendo_livro', 'concluido'].includes(status)) return 'livro';
+  if (['gerando_sumarios', 'aguardando_aprovacao'].includes(status)) return 'sumarios';
+  if (status === 'gerando_executivo') return 'executivo';
+  return 'materiais';
+};
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export const DetalheProjeto: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -109,8 +137,15 @@ export const DetalheProjeto: React.FC = () => {
   const { projeto, loading: loadingProjeto, error: errorProjeto, salvarExecutivo } = useProjeto(id);
   const { arquivos, loading: loadingArquivos } = useArquivos(id);
   const { sumarios, loading: loadingSumarios, selecionarSumario, atualizarSumario } = useSumarios(id);
+  const { capitulos, loading: loadingCapitulos, atualizarCapitulo } = useCapitulos(id);
+
   const [showConfiguracoes, setShowConfiguracoes] = useState(false);
   const [arquivosExpanded, setArquivosExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabId>('materiais');
+
+  useEffect(() => {
+    if (projeto) setActiveTab(getInitialTab(projeto.status));
+  }, [projeto?.status]);
 
   if (loadingProjeto) {
     return (
@@ -139,9 +174,6 @@ export const DetalheProjeto: React.FC = () => {
 
   const arquivosProcessadosCount = arquivos.filter(a => a.status === 'processado').length;
   const arquivosTotalCount = arquivos.length;
-
-  const showExecutivo = MOSTRA_EXECUTIVO.includes(projeto.status);
-  const showSumarios = MOSTRA_SUMARIOS.includes(projeto.status);
 
   return (
     <div className="min-h-screen bg-brand-bg-section pb-20">
@@ -218,61 +250,77 @@ export const DetalheProjeto: React.FC = () => {
           </div>
         </section>
 
-        {/* Arquivos Processados */}
-        <section>
-          <h2 className="font-serif text-xl font-bold text-brand-text-main mb-4 flex items-center gap-2.5">
-            <span className="w-0.5 h-5 rounded-full bg-brand-primary inline-block shrink-0" />
-            Arquivos Processados
-          </h2>
+        {/* Tabs */}
+        <div className="flex gap-1 bg-brand-bg rounded-xl border border-gray-200 shadow-sm p-1.5">
+          {TABS.map(tab => {
+            const available = tab.available(projeto.status);
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => available && setActiveTab(tab.id)}
+                disabled={!available}
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all
+                  ${isActive ? 'bg-[#111] text-brand-primary shadow-sm' : ''}
+                  ${!isActive && available ? 'text-gray-500 hover:text-brand-text-main hover:bg-brand-bg-section' : ''}
+                  ${!available ? 'text-gray-300 cursor-not-allowed' : ''}
+                `}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
 
-          <div className="bg-brand-bg rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <button
-              onClick={() => setArquivosExpanded(v => !v)}
-              className="w-full flex items-center justify-between px-6 py-4 hover:bg-brand-bg-section/60 transition-colors group"
-            >
-              <ProgressBar
-                current={arquivosProcessadosCount}
-                total={arquivosTotalCount}
-                label={`${arquivosProcessadosCount} de ${arquivosTotalCount} arquivos processados`}
-              />
-              <span className="flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg bg-brand-bg-card text-gray-600 group-hover:bg-brand-primary group-hover:text-brand-text-main transition-all shrink-0 ml-4">
-                {arquivosExpanded ? (
-                  <><ChevronUp className="w-4 h-4" /> Ocultar</>
-                ) : (
-                  <><ChevronDown className="w-4 h-4" /> Mostrar</>
-                )}
-              </span>
-            </button>
-
-            {arquivosExpanded && (
-              <div className="p-4 border-t border-gray-100">
-                {loadingArquivos ? (
-                  <div className="flex justify-center py-8">
-                    <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-                  </div>
-                ) : arquivos.length > 0 ? (
-                  <div className="space-y-2">
-                    {arquivos.map(arq => (
-                      <ArquivoCard key={arq.id} arquivo={arq} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-400 text-sm">
-                    Nenhum arquivo encontrado para este projeto.
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Projeto Executivo */}
-        {showExecutivo && (
+        {/* Tab: Materiais */}
+        {activeTab === 'materiais' && (
           <section>
-            <h2 className="font-serif text-xl font-bold text-brand-text-main mb-4 flex items-center gap-2.5">
-              <span className="w-0.5 h-5 rounded-full bg-brand-primary inline-block shrink-0" />
-              Projeto Executivo
-            </h2>
+            <div className="bg-brand-bg rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              <button
+                onClick={() => setArquivosExpanded(v => !v)}
+                className="w-full flex items-center justify-between px-6 py-4 hover:bg-brand-bg-section/60 transition-colors group"
+              >
+                <ProgressBar
+                  current={arquivosProcessadosCount}
+                  total={arquivosTotalCount}
+                  label={`${arquivosProcessadosCount} de ${arquivosTotalCount} arquivos processados`}
+                />
+                <span className="flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg bg-brand-bg-card text-gray-600 group-hover:bg-brand-primary group-hover:text-brand-text-main transition-all shrink-0 ml-4">
+                  {arquivosExpanded ? (
+                    <><ChevronUp className="w-4 h-4" /> Ocultar</>
+                  ) : (
+                    <><ChevronDown className="w-4 h-4" /> Mostrar</>
+                  )}
+                </span>
+              </button>
+
+              {arquivosExpanded && (
+                <div className="p-4 border-t border-gray-100">
+                  {loadingArquivos ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                    </div>
+                  ) : arquivos.length > 0 ? (
+                    <div className="space-y-2">
+                      {arquivos.map(arq => (
+                        <ArquivoCard key={arq.id} arquivo={arq} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-400 text-sm">
+                      Nenhum arquivo encontrado para este projeto.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* Tab: Executivo */}
+        {activeTab === 'executivo' && (
+          <section>
             <ExecutivoPanel
               conteudo={projeto.conteudo_executivo}
               driveUrl={projeto.drive_executivo_url}
@@ -282,20 +330,15 @@ export const DetalheProjeto: React.FC = () => {
           </section>
         )}
 
-        {/* Sumários */}
-        {showSumarios && (
-          <section>
-            <h2 className="font-serif text-xl font-bold text-brand-text-main mb-4 flex items-center gap-2.5">
-              <span className="w-0.5 h-5 rounded-full bg-brand-primary inline-block shrink-0" />
-              Sumários
-            </h2>
-
+        {/* Tab: Sumários */}
+        {activeTab === 'sumarios' && (
+          <section className="space-y-4">
             {loadingSumarios ? (
               <div className="bg-brand-bg rounded-2xl p-8 border border-gray-200 shadow-sm flex justify-center">
                 <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
               </div>
             ) : sumarios.length > 0 ? (
-              <div className="space-y-4">
+              <>
                 {sumarios.map(sumario => (
                   <SumarioCard
                     key={sumario.id}
@@ -304,7 +347,13 @@ export const DetalheProjeto: React.FC = () => {
                     onAtualizar={atualizarSumario}
                   />
                 ))}
-              </div>
+                {projeto.status === 'aguardando_aprovacao' && (
+                  <EscreverLivroBanner
+                    projetoId={projeto.id}
+                    temSumarioSelecionado={sumarios.some(s => s.selecionado)}
+                  />
+                )}
+              </>
             ) : (
               <div className="bg-brand-bg rounded-2xl p-10 border border-gray-200 shadow-sm text-center flex flex-col items-center gap-3">
                 <Loader2 className="w-6 h-6 animate-spin text-brand-primary" />
@@ -314,13 +363,34 @@ export const DetalheProjeto: React.FC = () => {
           </section>
         )}
 
-        {/* Escrever Livro Banner — after sumários, where it logically belongs */}
-        {projeto.status === 'aguardando_aprovacao' && (
-          <EscreverLivroBanner
-            projetoId={projeto.id}
-            driveExecutivoUrl={projeto.drive_executivo_url}
-            temSumarioSelecionado={sumarios.some(s => s.selecionado)}
-          />
+        {/* Tab: Livro */}
+        {activeTab === 'livro' && (
+          <section className="space-y-4">
+            {loadingCapitulos ? (
+              <div className="bg-brand-bg rounded-2xl p-8 border border-gray-200 shadow-sm flex justify-center">
+                <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+              </div>
+            ) : capitulos.length > 0 ? (
+              <>
+                <div className="flex items-center justify-between px-1">
+                  <p className="text-sm text-gray-500">
+                    <span className="font-semibold text-brand-text-main">{capitulos.length}</span> capítulos ·{' '}
+                    <span className="font-semibold text-brand-text-main">
+                      {capitulos.reduce((acc, c) => acc + c.palavras, 0).toLocaleString('pt-BR')}
+                    </span> palavras no total
+                  </p>
+                </div>
+                {capitulos.map(cap => (
+                  <CapituloPanel key={cap.id} capitulo={cap} onSave={atualizarCapitulo} />
+                ))}
+              </>
+            ) : (
+              <div className="bg-brand-bg rounded-2xl p-10 border border-gray-200 shadow-sm text-center flex flex-col items-center gap-3">
+                <Loader2 className="w-6 h-6 animate-spin text-brand-primary" />
+                <span className="text-sm text-gray-400">Capítulos sendo escritos...</span>
+              </div>
+            )}
+          </section>
         )}
 
       </main>

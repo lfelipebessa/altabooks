@@ -1,0 +1,33 @@
+-- Insert Sumario 1 (cronologica)
+INSERT INTO sumarios (projeto_id, opcao, abordagem, titulo_sumario, capitulos)
+VALUES (
+  '{{ $('Webhook').first().json.body.projeto_id }}',
+  1,
+  'cronologica',
+  '{{ $('AI Agent').first().json.output.titulo_sumario.replace(/'/g, "''") }}',
+  '{{ JSON.stringify($('AI Agent').first().json.output.capitulos).replace(/'/g, "''") }}'::jsonb
+)
+
+---
+
+-- Insert Sumario 2 (tematica)
+INSERT INTO sumarios (projeto_id, opcao, abordagem, titulo_sumario, capitulos)
+VALUES (
+  '{{ $('Webhook').first().json.body.projeto_id }}',
+  2,
+  'tematica',
+  '{{ $('AI Agent1').first().json.output.titulo_sumario.replace(/'/g, "''") }}',
+  '{{ JSON.stringify($('AI Agent1').first().json.output.capitulos).replace(/'/g, "''") }}'::jsonb
+)
+
+---
+
+-- Insert Sumario 3 (narrativa)
+INSERT INTO sumarios (projeto_id, opcao, abordagem, titulo_sumario, capitulos)
+VALUES (
+  '{{ $('Webhook').first().json.body.projeto_id }}',
+  3,
+  'narrativa',
+  '{{ $('AI Agent2').first().json.output.titulo_sumario.replace(/'/g, "''") }}',
+  '{{ JSON.stringify($('AI Agent2').first().json.output.capitulos).replace(/'/g, "''") }}'::jsonb
+)

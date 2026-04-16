@@ -42,3 +42,10 @@ export interface Sumario {
   conteudo: string | null
   created_at: string; updated_at: string | null
 }
+
+export interface CapituloLivro {
+  id: string; projeto_id: string; sumario_id: string
+  numero: number; titulo: string; descricao: string
+  conteudo: string; resumo: string; palavras: number
+  status: string; created_at: string
+}

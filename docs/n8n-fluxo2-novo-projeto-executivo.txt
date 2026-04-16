@@ -1,0 +1,112 @@
+========================================
+BLOCO 1 — STRUCTURED OUTPUT PARSER
+(jsonSchemaExample)
+========================================
+
+{
+  "posicionamento": {
+    "titulo_principal": "12 Regras para a Vida a Dois",
+    "subtitulos_sugeridos": ["O Código da Escolha", "Manual da Mulher de Alto Valor"],
+    "tese_central": "O caos afetivo moderno deriva da inversão de papéis de gênero.",
+    "conceito": "Realismo Afetivo — visão pragmática sobre relacionamentos no século XXI.",
+    "diferencial": "Integração entre livro físico e conteúdo digital já validado nas redes."
+  },
+  "publico_alvo": {
+    "primario": "Mulheres adultas (25-45 anos) que buscam estabilidade afetiva.",
+    "secundario": "Homens interessados em amadurecimento e valores tradicionais.",
+    "perfil_consumo": "Pessoas que consomem conteúdo em vídeos curtos e buscam aprofundamento."
+  },
+  "tom_e_estilo": {
+    "identidade": "Paternalista, direto, rústico e provocador (tough love).",
+    "oralidade": "Conversa intensa, parágrafos curtos de 3 a 6 linhas.",
+    "autoridade": "Estabelecida pela experiência vivida, não por credenciais acadêmicas."
+  },
+  "arquitetura_capitulos": {
+    "titulo_provocativo": "Um soco no estômago que gere identificação ou desconforto imediato.",
+    "abertura_tensao": "História pessoal ou caso real que ancora o leitor na dor do problema.",
+    "frase_ancora": "Um pensamento curto e viralizável que resuma a lição.",
+    "desenvolvimento": "Expansão das ideias dos vídeos com profundidade e clareza.",
+    "licoes_praticas": "Exercícios, perguntas de autoconhecimento ou desafios objetivos.",
+    "fechamento": "Virada emocional ou espiritual apontando para fé, amadurecimento e legado."
+  },
+  "diretrizes_conteudo": [
+    "Tema 1 e como desenvolver",
+    "Tema 2 e como desenvolver"
+  ],
+  "especificacoes_tecnicas": {
+    "extensao": "150 a 180 páginas no total.",
+    "volume_por_capitulo": "10 a 15 páginas por capítulo.",
+    "escaneabilidade": "Intertítulos, frases de impacto e quebras de ritmo."
+  }
+}
+
+
+========================================
+BLOCO 2 — AI AGENT (System Message)
+========================================
+
+Você é um editor-chefe sênior de uma editora de não-ficção brasileira. Recebeu os resumos individuais de todos os materiais de um autor. Sua tarefa é consolidar tudo em um Projeto Executivo completo e estratégico com 6 seções.
+
+Seção 1 — posicionamento: defina título principal, 3 subtítulos sugeridos, a tese central do livro, o conceito editorial (dê um nome ao posicionamento) e o diferencial de mercado.
+
+Seção 2 — publico_alvo: descreva o primário (gênero, faixa etária, classe social, motivação), o secundário e o perfil de consumo de mídia.
+
+Seção 3 — tom_e_estilo: descreva a identidade da voz (adjetivos precisos), como deve soar a oralidade do texto (ritmo, tamanho de parágrafos) e como a autoridade do autor é construída.
+
+Seção 4 — arquitetura_capitulos: descreva o modelo de impacto que cada capítulo deve seguir — título provocativo, abertura com tensão, frase âncora, desenvolvimento do conceito, lições práticas e fechamento.
+
+Seção 5 — diretrizes_conteudo: liste os 5 a 8 temas-chave com orientação de como cada um deve ser desenvolvido no livro.
+
+Seção 6 — especificacoes_tecnicas: extensão total do livro, volume por capítulo e diretrizes de escaneabilidade (uso de intertítulos, frases de impacto, etc).
+
+Baseie tudo estritamente nos materiais do autor. Não invente informações.
+
+
+========================================
+BLOCO 3 — GERAR HTML (Code node, jsCode)
+========================================
+
+const o = $('AI Agent').first().json.output;
+
+const subtitulos = (o.posicionamento.subtitulos_sugeridos || [])
+  .map(t => `<li>${t}</li>`).join('');
+
+const diretrizes = (o.diretrizes_conteudo || [])
+  .map(d => `<li>${d}</li>`).join('');
+
+const html =
+  `<h1>Projeto Executivo</h1>` +
+
+  `<h2>1. Posicionamento e Conceito Editorial</h2>` +
+  `<p><strong>Título Principal:</strong> ${o.posicionamento.titulo_principal}</p>` +
+  `<p><strong>Subtítulos Sugeridos:</strong></p><ul>${subtitulos}</ul>` +
+  `<p><strong>Tese Central:</strong> ${o.posicionamento.tese_central}</p>` +
+  `<p><strong>Conceito:</strong> ${o.posicionamento.conceito}</p>` +
+  `<p><strong>Diferencial:</strong> ${o.posicionamento.diferencial}</p>` +
+
+  `<h2>2. Público-Alvo</h2>` +
+  `<p><strong>Primário:</strong> ${o.publico_alvo.primario}</p>` +
+  `<p><strong>Secundário:</strong> ${o.publico_alvo.secundario}</p>` +
+  `<p><strong>Perfil de Consumo:</strong> ${o.publico_alvo.perfil_consumo}</p>` +
+
+  `<h2>3. Tom de Voz e Estilo</h2>` +
+  `<p><strong>Identidade:</strong> ${o.tom_e_estilo.identidade}</p>` +
+  `<p><strong>Oralidade:</strong> ${o.tom_e_estilo.oralidade}</p>` +
+  `<p><strong>Autoridade:</strong> ${o.tom_e_estilo.autoridade}</p>` +
+
+  `<h2>4. Arquitetura dos Capítulos</h2>` +
+  `<p><strong>Título Provocativo:</strong> ${o.arquitetura_capitulos.titulo_provocativo}</p>` +
+  `<p><strong>Abertura com Tensão:</strong> ${o.arquitetura_capitulos.abertura_tensao}</p>` +
+  `<p><strong>Frase Âncora:</strong> ${o.arquitetura_capitulos.frase_ancora}</p>` +
+  `<p><strong>Desenvolvimento:</strong> ${o.arquitetura_capitulos.desenvolvimento}</p>` +
+  `<p><strong>Lições Práticas:</strong> ${o.arquitetura_capitulos.licoes_praticas}</p>` +
+  `<p><strong>Fechamento:</strong> ${o.arquitetura_capitulos.fechamento}</p>` +
+
+  `<h2>5. Diretrizes de Conteúdo</h2><ul>${diretrizes}</ul>` +
+
+  `<h2>6. Especificações Técnicas</h2>` +
+  `<p><strong>Extensão:</strong> ${o.especificacoes_tecnicas.extensao}</p>` +
+  `<p><strong>Volume por Capítulo:</strong> ${o.especificacoes_tecnicas.volume_por_capitulo}</p>` +
+  `<p><strong>Escaneabilidade:</strong> ${o.especificacoes_tecnicas.escaneabilidade}</p>`;
+
+return [{ json: { conteudo_html: html } }];

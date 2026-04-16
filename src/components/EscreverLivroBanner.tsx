@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
-import { ExternalLink, AlertCircle, ArrowRight } from 'lucide-react';
+import { AlertCircle, ArrowRight } from 'lucide-react';
 import { EscreverLivroModal } from './EscreverLivroModal';
 
 interface EscreverLivroBannerProps {
   projetoId: string;
-  driveExecutivoUrl: string | null;
   temSumarioSelecionado: boolean;
 }
 
 export const EscreverLivroBanner: React.FC<EscreverLivroBannerProps> = ({
   projetoId,
-  driveExecutivoUrl,
   temSumarioSelecionado,
 }) => {
   const [modalOpen, setModalOpen] = useState(false);
@@ -46,21 +44,6 @@ export const EscreverLivroBanner: React.FC<EscreverLivroBannerProps> = ({
             </div>
 
             <div className="flex items-center gap-3 shrink-0">
-              <a
-                href={driveExecutivoUrl ?? '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-disabled={!driveExecutivoUrl}
-                onClick={!driveExecutivoUrl ? (e) => e.preventDefault() : undefined}
-                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-semibold transition-colors ${
-                  driveExecutivoUrl
-                    ? 'border-gray-600 text-gray-300 hover:border-gray-400 hover:text-white cursor-pointer'
-                    : 'border-gray-700 text-gray-600 cursor-not-allowed opacity-50'
-                }`}
-              >
-                <ExternalLink className="w-4 h-4" />
-                Ver Executivo
-              </a>
               <button
                 onClick={() => temSumarioSelecionado && setModalOpen(true)}
                 disabled={!temSumarioSelecionado}
