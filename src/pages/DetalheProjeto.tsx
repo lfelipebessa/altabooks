@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { ProjetoStatus } from '../types';
-import { ArrowLeft, ExternalLink, Loader2, Settings, Check, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Loader2, Settings, Check, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { useProjeto } from '../hooks/useProjeto';
 import { useArquivos } from '../hooks/useArquivos';
 import { useSumarios } from '../hooks/useSumarios';
@@ -11,6 +11,7 @@ import { SumarioCard } from '../components/SumarioCard';
 import { ProgressBar } from '../components/ProgressBar';
 import { EscreverLivroBanner } from '../components/EscreverLivroBanner';
 import { ConfiguracoesProjetoModal } from '../components/ConfiguracoesProjetoModal';
+import { ExecutivoPanel } from '../components/ExecutivoPanel';
 import logo from '../assets/logo-alta-books.png';
 
 const MOSTRA_EXECUTIVO: readonly ProjetoStatus[] = [
@@ -105,10 +106,11 @@ export const DetalheProjeto: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { projeto, loading: loadingProjeto, error: errorProjeto } = useProjeto(id);
+  const { projeto, loading: loadingProjeto, error: errorProjeto, salvarExecutivo } = useProjeto(id);
   const { arquivos, loading: loadingArquivos } = useArquivos(id);
   const { sumarios, loading: loadingSumarios, selecionarSumario } = useSumarios(id);
   const [showConfiguracoes, setShowConfiguracoes] = useState(false);
+  const [arquivosExpanded, setArquivosExpanded] = useState(false);
 
   if (loadingProjeto) {
     return (
@@ -224,31 +226,43 @@ export const DetalheProjeto: React.FC = () => {
           </h2>
 
           <div className="bg-brand-bg rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-6 pt-5 pb-4 border-b border-gray-100">
+            <button
+              onClick={() => setArquivosExpanded(v => !v)}
+              className="w-full flex items-center justify-between px-6 py-4 hover:bg-brand-bg-section/60 transition-colors group"
+            >
               <ProgressBar
                 current={arquivosProcessadosCount}
                 total={arquivosTotalCount}
                 label={`${arquivosProcessadosCount} de ${arquivosTotalCount} arquivos processados`}
               />
-            </div>
+              <span className="flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg bg-brand-bg-card text-gray-600 group-hover:bg-brand-primary group-hover:text-brand-text-main transition-all shrink-0 ml-4">
+                {arquivosExpanded ? (
+                  <><ChevronUp className="w-4 h-4" /> Ocultar</>
+                ) : (
+                  <><ChevronDown className="w-4 h-4" /> Mostrar</>
+                )}
+              </span>
+            </button>
 
-            <div className="p-4">
-              {loadingArquivos ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-                </div>
-              ) : arquivos.length > 0 ? (
-                <div className="space-y-2">
-                  {arquivos.map(arq => (
-                    <ArquivoCard key={arq.id} arquivo={arq} />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-400 text-sm">
-                  Nenhum arquivo encontrado para este projeto.
-                </div>
-              )}
-            </div>
+            {arquivosExpanded && (
+              <div className="p-4 border-t border-gray-100">
+                {loadingArquivos ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                  </div>
+                ) : arquivos.length > 0 ? (
+                  <div className="space-y-2">
+                    {arquivos.map(arq => (
+                      <ArquivoCard key={arq.id} arquivo={arq} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-400 text-sm">
+                    Nenhum arquivo encontrado para este projeto.
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </section>
 
@@ -259,33 +273,12 @@ export const DetalheProjeto: React.FC = () => {
               <span className="w-0.5 h-5 rounded-full bg-brand-primary inline-block shrink-0" />
               Projeto Executivo
             </h2>
-            <div className="bg-brand-bg rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <h3 className="font-semibold text-brand-text-main mb-1">Documento Executivo</h3>
-                <p className="text-sm text-gray-500">
-                  {projeto.drive_executivo_url
-                    ? 'Gerado com sucesso — pronto para revisão.'
-                    : 'Sendo gerado... aguarde.'}
-                </p>
-              </div>
-
-              {projeto.drive_executivo_url ? (
-                <a
-                  href={projeto.drive_executivo_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-5 py-2.5 bg-brand-primary hover:bg-brand-hover text-brand-text-main font-bold rounded-lg transition-colors shrink-0"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  Abrir Executivo
-                </a>
-              ) : (
-                <div className="px-5 py-2.5 bg-brand-bg-badge border border-brand-primary/30 text-amber-800 font-medium rounded-lg flex items-center gap-2 shrink-0">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Processando
-                </div>
-              )}
-            </div>
+            <ExecutivoPanel
+              conteudo={projeto.conteudo_executivo}
+              driveUrl={projeto.drive_executivo_url}
+              isReady={!!(projeto.drive_executivo_url || projeto.conteudo_executivo)}
+              onSave={salvarExecutivo}
+            />
           </section>
         )}
 

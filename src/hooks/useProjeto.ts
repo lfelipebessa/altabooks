@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Projeto } from '../types'
 
@@ -50,5 +50,14 @@ export function useProjeto(id: string | undefined) {
     }
   }, [id])
 
-  return { projeto, loading, error }
+  const salvarExecutivo = useCallback(async (html: string) => {
+    if (!id) return
+    const { error } = await supabase
+      .from('projetos')
+      .update({ conteudo_executivo: html })
+      .eq('id', id)
+    if (error) throw error
+  }, [id])
+
+  return { projeto, loading, error, salvarExecutivo }
 }
