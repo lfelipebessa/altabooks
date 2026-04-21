@@ -32,6 +32,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onNewProject }) => {
                 <button
                     onClick={signOut}
                     title="Sair"
+                    aria-label="Sair"
                     className="flex items-center gap-2 text-white/70 hover:text-white transition-colors text-sm cursor-pointer"
                 >
                     <LogOut className="w-4 h-4" />
