@@ -29,6 +29,13 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
           Gerando Executivo
         </span>
       );
+    case 'aguardando_revisao_autor':
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+          <Clock className="w-3.5 h-3.5" />
+          Revisão do Autor
+        </span>
+      );
     case 'gerando_sumarios':
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-brand-bg-badge text-amber-800 border border-brand-primary">

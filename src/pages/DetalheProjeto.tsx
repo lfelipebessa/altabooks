@@ -22,6 +22,7 @@ const PIPELINE_STAGES: { key: ProjetoStatus; label: string }[] = [
   { key: 'aguardando', label: 'Fila' },
   { key: 'analisando_materiais', label: 'Análise' },
   { key: 'gerando_executivo', label: 'Executivo' },
+  { key: 'aguardando_revisao_autor', label: 'Revisão' },
   { key: 'gerando_sumarios', label: 'Sumários' },
   { key: 'aguardando_aprovacao', label: 'Aprovação' },
   { key: 'escrevendo_livro', label: 'Escrita' },
@@ -105,7 +106,7 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode; available: (s: Pr
     id: 'executivo',
     label: 'Executivo',
     icon: <FileText className="w-4 h-4" />,
-    available: s => ['gerando_executivo', 'aguardando_aprovacao', 'escrevendo_livro', 'concluido'].includes(s),
+    available: s => ['gerando_executivo', 'aguardando_revisao_autor', 'gerando_sumarios', 'aguardando_aprovacao', 'escrevendo_livro', 'concluido'].includes(s),
   },
   {
     id: 'sumarios',
@@ -124,7 +125,7 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode; available: (s: Pr
 const getInitialTab = (status: ProjetoStatus): TabId => {
   if (['escrevendo_livro', 'concluido'].includes(status)) return 'livro';
   if (['gerando_sumarios', 'aguardando_aprovacao'].includes(status)) return 'sumarios';
-  if (status === 'gerando_executivo') return 'executivo';
+  if (['gerando_executivo', 'aguardando_revisao_autor'].includes(status)) return 'executivo';
   return 'materiais';
 };
 
@@ -134,7 +135,7 @@ export const DetalheProjeto: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { projeto, loading: loadingProjeto, error: errorProjeto, salvarExecutivo } = useProjeto(id);
+  const { projeto, loading: loadingProjeto, error: errorProjeto, salvarExecutivo, confirmarRevisado } = useProjeto(id);
   const { arquivos, loading: loadingArquivos } = useArquivos(id);
   const { sumarios, loading: loadingSumarios, selecionarSumario, atualizarSumario } = useSumarios(id);
   const { capitulos, loading: loadingCapitulos, atualizarCapitulo } = useCapitulos(id);
@@ -325,7 +326,9 @@ export const DetalheProjeto: React.FC = () => {
               conteudo={projeto.conteudo_executivo}
               driveUrl={projeto.drive_executivo_url}
               isReady={!!(projeto.drive_executivo_url || projeto.conteudo_executivo)}
+              projetoStatus={projeto.status}
               onSave={salvarExecutivo}
+              onConfirmarRevisado={confirmarRevisado}
             />
           </section>
         )}
@@ -339,6 +342,12 @@ export const DetalheProjeto: React.FC = () => {
               </div>
             ) : sumarios.length > 0 ? (
               <>
+                {projeto.status === 'aguardando_aprovacao' && (
+                  <EscreverLivroBanner
+                    projetoId={projeto.id}
+                    temSumarioSelecionado={sumarios.some(s => s.selecionado)}
+                  />
+                )}
                 {sumarios.map(sumario => (
                   <SumarioCard
                     key={sumario.id}
@@ -347,12 +356,6 @@ export const DetalheProjeto: React.FC = () => {
                     onAtualizar={atualizarSumario}
                   />
                 ))}
-                {projeto.status === 'aguardando_aprovacao' && (
-                  <EscreverLivroBanner
-                    projetoId={projeto.id}
-                    temSumarioSelecionado={sumarios.some(s => s.selecionado)}
-                  />
-                )}
               </>
             ) : (
               <div className="bg-brand-bg rounded-2xl p-10 border border-gray-200 shadow-sm text-center flex flex-col items-center gap-3">

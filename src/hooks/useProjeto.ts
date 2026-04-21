@@ -60,5 +60,21 @@ export function useProjeto(id: string | undefined) {
     setProjeto(prev => prev ? { ...prev, conteudo_executivo: html } : prev)
   }, [id])
 
-  return { projeto, loading, error, salvarExecutivo }
+  const confirmarRevisado = useCallback(async (html: string) => {
+    if (!id) return
+    const { error } = await supabase
+      .from('projetos')
+      .update({ conteudo_executivo: html, status: 'gerando_sumarios' })
+      .eq('id', id)
+    if (error) throw error
+    setProjeto(prev => prev ? { ...prev, conteudo_executivo: html, status: 'gerando_sumarios' } : prev)
+    // fire-and-forget — Fluxo 3 é longo, não aguardamos resposta
+    fetch('https://primary-production-bd3cf.up.railway.app/webhook/ghostwriter/gerar-sumarios', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projeto_id: id }),
+    }).catch(console.error)
+  }, [id])
+
+  return { projeto, loading, error, salvarExecutivo, confirmarRevisado }
 }

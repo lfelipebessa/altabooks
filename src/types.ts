@@ -1,5 +1,6 @@
 export type ProjetoStatus =
   | 'aguardando' | 'analisando_materiais' | 'gerando_executivo'
+  | 'aguardando_revisao_autor'
   | 'gerando_sumarios' | 'aguardando_aprovacao' | 'escrevendo_livro'
   | 'concluido' | 'erro'
 
