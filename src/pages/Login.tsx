@@ -14,16 +14,16 @@ export const Login: React.FC = () => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      setError('Email ou senha incorretos.');
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        setError('Email ou senha incorretos.');
+        return;
+      }
+      navigate('/');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    navigate('/');
   };
 
   return (
@@ -71,7 +71,7 @@ export const Login: React.FC = () => {
           </div>
 
           {error && (
-            <p className="text-red-600 text-sm">{error}</p>
+            <p role="alert" className="text-red-600 text-sm">{error}</p>
           )}
 
           <button
