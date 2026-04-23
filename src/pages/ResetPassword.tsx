@@ -17,6 +17,13 @@ export const ResetPassword: React.FC = () => {
       setExpired(true);
     }, 5000);
 
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        clearTimeout(timer);
+        setReady(true);
+      }
+    });
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         clearTimeout(timer);
