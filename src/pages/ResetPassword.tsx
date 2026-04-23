@@ -6,18 +6,28 @@ import logo from '../assets/logo-alta-books.png';
 export const ResetPassword: React.FC = () => {
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
+  const [expired, setExpired] = useState(false);
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setExpired(true);
+    }, 5000);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
+        clearTimeout(timer);
         setReady(true);
       }
     });
-    return () => subscription.unsubscribe();
+
+    return () => {
+      clearTimeout(timer);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,8 +61,30 @@ export const ResetPassword: React.FC = () => {
           <img src={logo} alt="Alta Books" className="h-12 w-auto" />
         </div>
 
-        {!ready ? (
-          <p className="text-center text-sm text-[#333333]">Verificando link de recuperação...</p>
+        {expired ? (
+          <div className="flex flex-col items-center gap-4 text-center">
+            <p className="text-sm text-[#333333]">
+              Este link expirou ou é inválido.
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate('/login')}
+              className="text-sm text-[#333333] hover:text-[#111111] underline cursor-pointer"
+            >
+              Voltar para o login
+            </button>
+          </div>
+        ) : !ready ? (
+          <div className="flex flex-col items-center gap-4">
+            <p role="status" className="text-center text-sm text-[#333333]">Verificando link de recuperação...</p>
+            <button
+              type="button"
+              onClick={() => navigate('/login')}
+              className="text-sm text-[#333333] hover:text-[#111111] underline cursor-pointer"
+            >
+              Voltar para o login
+            </button>
+          </div>
         ) : (
           <>
             <h1 className="text-2xl font-bold text-[#111111] mb-6 text-center" style={{ fontFamily: 'DM Serif Display, serif' }}>
@@ -69,6 +101,7 @@ export const ResetPassword: React.FC = () => {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
+                  minLength={6}
                   autoComplete="new-password"
                   className="border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#F5C518] focus:border-transparent"
                   placeholder="••••••••"
