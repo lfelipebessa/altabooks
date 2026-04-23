@@ -30,6 +30,7 @@ export const Conta: React.FC = () => {
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) {
+        console.error('updateUser failed:', error);
         setError('Não foi possível alterar a senha. Tente novamente.');
         return;
       }
@@ -76,7 +77,7 @@ export const Conta: React.FC = () => {
                 id="new-password"
                 type="password"
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={e => { setPassword(e.target.value); setSuccess(false); }}
                 required
                 minLength={6}
                 autoComplete="new-password"
@@ -92,8 +93,9 @@ export const Conta: React.FC = () => {
                 id="confirm-password"
                 type="password"
                 value={confirm}
-                onChange={e => setConfirm(e.target.value)}
+                onChange={e => { setConfirm(e.target.value); setSuccess(false); }}
                 required
+                minLength={6}
                 autoComplete="new-password"
                 className="border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#F5C518] focus:border-transparent"
                 placeholder="••••••••"
