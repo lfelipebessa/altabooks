@@ -4,6 +4,8 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { Login } from './pages/Login';
 import { ListagemProjetos } from './pages/ListagemProjetos';
 import { DetalheProjeto } from './pages/DetalheProjeto';
+import { ResetPassword } from './pages/ResetPassword';
+import { Conta } from './pages/Conta';
 
 function App() {
   return (
@@ -11,6 +13,7 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route
             path="/"
             element={
@@ -24,6 +27,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <DetalheProjeto />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/conta"
+            element={
+              <ProtectedRoute>
+                <Conta />
               </ProtectedRoute>
             }
           />
