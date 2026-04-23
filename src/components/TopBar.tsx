@@ -20,8 +20,15 @@ export const TopBar: React.FC<TopBarProps> = ({ onNewProject }) => {
         setOpen(false);
       }
     };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
     document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   return (
@@ -48,6 +55,8 @@ export const TopBar: React.FC<TopBarProps> = ({ onNewProject }) => {
             onClick={() => setOpen(prev => !prev)}
             title="Minha conta"
             aria-label="Minha conta"
+            aria-haspopup="true"
+            aria-expanded={open}
             className="flex items-center gap-2 text-white/70 hover:text-white transition-colors text-sm cursor-pointer"
           >
             <UserCircle className="w-5 h-5" />
