@@ -121,7 +121,7 @@ O `driveLink` aponta para o PDF ou Word a ser traduzido. O n8n processa e armaze
 }
 ```
 
-O campo é `driveExecutivoLink` (não `driveLink`) para evitar ambiguidade — o n8n armazena em `drive_executivo_url` e já inicia a geração de sumários, pulando análise de materiais e geração de executivo. O campo `drive_url` (pasta de materiais) fica `null` neste tipo de projeto.
+O campo é `driveExecutivoLink` (não `driveLink`) para evitar ambiguidade — o n8n armazena em `drive_executivo_url` e já inicia a geração de sumários diretamente, sem análise de materiais, sem RAG e sem geração de executivo. O documento executivo é o único input do pipeline. O campo `drive_url` (pasta de materiais) fica `null` neste tipo de projeto.
 
 ---
 
