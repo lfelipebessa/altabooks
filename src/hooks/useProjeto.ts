@@ -76,5 +76,20 @@ export function useProjeto(id: string | undefined) {
     }).catch(console.error)
   }, [id])
 
-  return { projeto, loading, error, salvarExecutivo, confirmarRevisado }
+  const iniciarAnalise = useCallback(async () => {
+    if (!id) return
+    const { error } = await supabase
+      .from('projetos')
+      .update({ status: 'analisando_materiais' })
+      .eq('id', id)
+    if (error) throw error
+    setProjeto(prev => prev ? { ...prev, status: 'analisando_materiais' } : prev)
+    fetch('https://primary-production-bd3cf.up.railway.app/webhook/ghostwriter/iniciar-analise', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projetoId: id }),
+    }).catch(console.error)
+  }, [id])
+
+  return { projeto, loading, error, salvarExecutivo, confirmarRevisado, iniciarAnalise }
 }

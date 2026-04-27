@@ -135,7 +135,7 @@ export const DetalheProjeto: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { projeto, loading: loadingProjeto, error: errorProjeto, salvarExecutivo, confirmarRevisado } = useProjeto(id);
+  const { projeto, loading: loadingProjeto, error: errorProjeto, salvarExecutivo, confirmarRevisado, iniciarAnalise } = useProjeto(id);
   const { arquivos, loading: loadingArquivos } = useArquivos(id);
   const { sumarios, loading: loadingSumarios, selecionarSumario, atualizarSumario } = useSumarios(id);
   const { capitulos, loading: loadingCapitulos, atualizarCapitulo } = useCapitulos(id);
@@ -143,6 +143,7 @@ export const DetalheProjeto: React.FC = () => {
   const [showConfiguracoes, setShowConfiguracoes] = useState(false);
   const [arquivosExpanded, setArquivosExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('materiais');
+  const [iniciandoAnalise, setIniciandoAnalise] = useState(false);
 
   useEffect(() => {
     if (projeto) setActiveTab(getInitialTab(projeto.status));
@@ -276,7 +277,31 @@ export const DetalheProjeto: React.FC = () => {
 
         {/* Tab: Materiais */}
         {activeTab === 'materiais' && (
-          <section>
+          <section className="space-y-4">
+            {projeto.auto_start === false && projeto.status === 'aguardando' && (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="flex-1">
+                  <p className="font-semibold text-amber-900 text-sm">Análise pendente de início manual</p>
+                  <p className="text-amber-700 text-sm mt-0.5">
+                    Este projeto foi criado sem início automático. Quando os materiais estiverem prontos no Drive, inicie a análise.
+                  </p>
+                </div>
+                <button
+                  disabled={iniciandoAnalise}
+                  onClick={async () => {
+                    setIniciandoAnalise(true)
+                    try { await iniciarAnalise() }
+                    catch (err) { console.error('Erro ao iniciar análise:', err) }
+                    finally { setIniciandoAnalise(false) }
+                  }}
+                  className="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-brand-primary hover:bg-brand-hover text-brand-text-main font-bold rounded-lg transition-colors text-sm disabled:opacity-50"
+                >
+                  {iniciandoAnalise && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Iniciar análise
+                </button>
+              </div>
+            )}
+
             <div className="bg-brand-bg rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
               <button
                 onClick={() => setArquivosExpanded(v => !v)}
