@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import type { ProjetoStatus } from '../types';
-import { ArrowLeft, ExternalLink, Loader2, Settings, Check, AlertCircle, ChevronDown, ChevronUp, BookOpen, FileText, LayoutList, FolderOpen } from 'lucide-react';
+import type { ProjetoStatus, ProjetoTipo } from '../types';
+import { ArrowLeft, ExternalLink, Loader2, Settings, Check, AlertCircle, ChevronDown, ChevronUp, BookOpen, FileText, LayoutList, FolderOpen, ChevronsRight } from 'lucide-react';
 import { useProjeto } from '../hooks/useProjeto';
 import { useArquivos } from '../hooks/useArquivos';
 import { useSumarios } from '../hooks/useSumarios';
@@ -35,7 +35,53 @@ const PROCESSING_STATUSES = new Set<ProjetoStatus>([
   'analisando_materiais', 'gerando_executivo', 'gerando_sumarios', 'escrevendo_livro',
 ]);
 
-const ProjectPipeline: React.FC<{ status: ProjetoStatus }> = ({ status }) => {
+const TRADUCAO_PIPELINE_STAGES: { key: ProjetoStatus; label: string }[] = [
+  { key: 'aguardando', label: 'Aguardando' },
+  { key: 'traduzindo', label: 'Traduzindo' },
+  { key: 'concluido', label: 'Concluído' },
+]
+
+const DO_EXECUTIVO_SKIPPED_INDEXES = new Set([0, 1, 2])
+
+const ProjectPipeline: React.FC<{ status: ProjetoStatus; tipo: ProjetoTipo }> = ({ status, tipo }) => {
+  if (tipo === 'traducao_arquivo') {
+    const currentIdx = TRADUCAO_PIPELINE_STAGES.findIndex(s => s.key === status)
+    const isError = status === 'erro'
+    return (
+      <div className="w-full overflow-x-auto">
+        <div className="flex items-start pb-1" style={{ minWidth: 'max-content' }}>
+          {TRADUCAO_PIPELINE_STAGES.map((stage, i) => {
+            const isCompleted = !isError && i < currentIdx
+            const isActive = !isError && i === currentIdx
+            return (
+              <React.Fragment key={stage.key}>
+                {i > 0 && (
+                  <div className="flex items-center self-start mt-[13px] mx-1.5">
+                    <div className={`h-px w-8 ${isCompleted || isActive ? 'bg-brand-primary' : 'bg-gray-200'}`} />
+                  </div>
+                )}
+                <div className="flex flex-col items-center gap-1.5" style={{ width: '3.5rem' }}>
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold
+                    ${isCompleted ? 'bg-[#111] text-[#F5C518]' : ''}
+                    ${isActive ? 'bg-brand-primary text-[#111] ring-2 ring-brand-primary/25 ring-offset-2 animate-pulse' : ''}
+                    ${!isCompleted && !isActive ? 'bg-gray-100 text-gray-400 border border-gray-200' : ''}
+                  `}>
+                    {isCompleted ? <Check className="w-3.5 h-3.5" strokeWidth={2.5} /> : <span>{i + 1}</span>}
+                  </div>
+                  <span className={`text-[10px] text-center leading-tight
+                    ${isCompleted ? 'text-gray-500 font-medium' : ''}
+                    ${isActive ? 'text-brand-text-main font-bold' : ''}
+                    ${!isCompleted && !isActive ? 'text-gray-400' : ''}
+                  `}>{stage.label}</span>
+                </div>
+              </React.Fragment>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
   const isError = status === 'erro';
   const currentIdx = isError ? -1 : PIPELINE_STAGES.findIndex(s => s.key === status);
   const isProcessing = PROCESSING_STATUSES.has(status);
@@ -44,32 +90,33 @@ const ProjectPipeline: React.FC<{ status: ProjetoStatus }> = ({ status }) => {
     <div className="w-full overflow-x-auto">
       <div className="flex items-start pb-1" style={{ minWidth: 'max-content' }}>
         {PIPELINE_STAGES.map((stage, i) => {
-          const isCompleted = !isError && i < currentIdx;
-          const isActive = !isError && i === currentIdx;
-          const isPending = isError || i > currentIdx;
+          const isSkipped = tipo === 'do_executivo' && DO_EXECUTIVO_SKIPPED_INDEXES.has(i)
+          const isCompleted = !isError && !isSkipped && i < currentIdx
+          const isActive = !isError && !isSkipped && i === currentIdx
+          const isPending = !isCompleted && !isActive && !isSkipped
 
           return (
             <React.Fragment key={stage.key}>
               {i > 0 && (
                 <div className="flex items-center self-start mt-[13px] mx-1.5">
-                  <div className={`h-px w-8 transition-colors duration-500 ${isCompleted || (isActive && i > 0) ? 'bg-brand-primary' : 'bg-gray-200'}`} />
+                  <div className={`h-px w-8 ${isSkipped ? 'bg-gray-100' : isCompleted || (isActive && i > 0) ? 'bg-brand-primary' : 'bg-gray-200'}`} />
                 </div>
               )}
               <div className="flex flex-col items-center gap-1.5" style={{ width: '3.5rem' }}>
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300
+                  ${isSkipped ? 'bg-gray-50 text-gray-300 border border-dashed border-gray-200' : ''}
                   ${isCompleted ? 'bg-[#111] text-[#F5C518]' : ''}
                   ${isActive ? `bg-brand-primary text-[#111] ring-2 ring-brand-primary/25 ring-offset-2 ${isProcessing ? 'animate-pulse' : ''}` : ''}
                   ${isPending ? 'bg-gray-100 text-gray-400 border border-gray-200' : ''}
                 `}>
-                  {isCompleted ? <Check className="w-3.5 h-3.5" strokeWidth={2.5} /> : <span>{i + 1}</span>}
+                  {isSkipped ? <ChevronsRight className="w-3 h-3" /> : isCompleted ? <Check className="w-3.5 h-3.5" strokeWidth={2.5} /> : <span>{i + 1}</span>}
                 </div>
                 <span className={`text-[10px] text-center leading-tight transition-colors
+                  ${isSkipped ? 'text-gray-300' : ''}
                   ${isCompleted ? 'text-gray-500 font-medium' : ''}
                   ${isActive ? 'text-brand-text-main font-bold' : ''}
                   ${isPending ? 'text-gray-400' : ''}
-                `}>
-                  {stage.label}
-                </span>
+                `}>{stage.label}</span>
               </div>
             </React.Fragment>
           );
@@ -97,7 +144,7 @@ const ProjectPipeline: React.FC<{ status: ProjetoStatus }> = ({ status }) => {
 
 type TabId = 'materiais' | 'executivo' | 'sumarios' | 'livro';
 
-const TABS: { id: TabId; label: string; icon: React.ReactNode; available: (s: ProjetoStatus) => boolean }[] = [
+const TABS: { id: TabId; label: string; icon: React.ReactNode; available: (s: ProjetoStatus, tipo: ProjetoTipo) => boolean }[] = [
   {
     id: 'materiais',
     label: 'Materiais',
@@ -108,23 +155,24 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode; available: (s: Pr
     id: 'executivo',
     label: 'Executivo',
     icon: <FileText className="w-4 h-4" />,
-    available: s => ['gerando_executivo', 'aguardando_revisao_autor', 'gerando_sumarios', 'aguardando_aprovacao', 'escrevendo_livro', 'concluido'].includes(s),
+    available: (s, tipo) => tipo !== 'traducao_arquivo' && ['gerando_executivo', 'aguardando_revisao_autor', 'gerando_sumarios', 'aguardando_aprovacao', 'escrevendo_livro', 'concluido'].includes(s),
   },
   {
     id: 'sumarios',
     label: 'Sumários',
     icon: <LayoutList className="w-4 h-4" />,
-    available: s => ['gerando_sumarios', 'aguardando_aprovacao', 'escrevendo_livro', 'concluido'].includes(s),
+    available: (s, tipo) => tipo !== 'traducao_arquivo' && ['gerando_sumarios', 'aguardando_aprovacao', 'escrevendo_livro', 'concluido'].includes(s),
   },
   {
     id: 'livro',
     label: 'Livro',
     icon: <BookOpen className="w-4 h-4" />,
-    available: s => ['escrevendo_livro', 'concluido'].includes(s),
+    available: (s, tipo) => tipo !== 'traducao_arquivo' && ['escrevendo_livro', 'concluido'].includes(s),
   },
 ];
 
-const getInitialTab = (status: ProjetoStatus): TabId => {
+const getInitialTab = (status: ProjetoStatus, tipo: ProjetoTipo): TabId => {
+  if (tipo === 'traducao_arquivo') return 'materiais';
   if (['escrevendo_livro', 'concluido'].includes(status)) return 'livro';
   if (['gerando_sumarios', 'aguardando_aprovacao'].includes(status)) return 'sumarios';
   if (['gerando_executivo', 'aguardando_revisao_autor'].includes(status)) return 'executivo';
@@ -150,8 +198,8 @@ export const DetalheProjeto: React.FC = () => {
   const [iniciandoAnalise, setIniciandoAnalise] = useState(false);
 
   useEffect(() => {
-    if (projeto) setActiveTab(getInitialTab(projeto.status));
-  }, [projeto?.status]);
+    if (projeto) setActiveTab(getInitialTab(projeto.status, projeto.tipo));
+  }, [projeto?.status, projeto?.tipo]);
 
   if (loadingProjeto) {
     return (
@@ -252,14 +300,14 @@ export const DetalheProjeto: React.FC = () => {
               )}
             </div>
 
-            <ProjectPipeline status={projeto.status} />
+            <ProjectPipeline status={projeto.status} tipo={projeto.tipo} />
           </div>
         </section>
 
         {/* Tabs */}
         <div className="flex gap-1 bg-brand-bg rounded-xl border border-gray-200 shadow-sm p-1.5">
           {TABS.map(tab => {
-            const available = tab.available(projeto.status);
+            const available = tab.available(projeto.status, projeto.tipo);
             const isActive = activeTab === tab.id;
             return (
               <button
