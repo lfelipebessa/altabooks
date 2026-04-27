@@ -6,6 +6,8 @@ import { useProjeto } from '../hooks/useProjeto';
 import { useArquivos } from '../hooks/useArquivos';
 import { useSumarios } from '../hooks/useSumarios';
 import { useCapitulos } from '../hooks/useCapitulos';
+import { useTraducoes } from '../hooks/useTraducoes';
+import { TraducaoCard } from '../components/TraducaoCard';
 import { StatusBadge } from '../components/StatusBadge';
 import { ArquivoCard } from '../components/ArquivoCard';
 import { SumarioCard } from '../components/SumarioCard';
@@ -139,6 +141,8 @@ export const DetalheProjeto: React.FC = () => {
   const { arquivos, loading: loadingArquivos } = useArquivos(id);
   const { sumarios, loading: loadingSumarios, selecionarSumario, atualizarSumario } = useSumarios(id);
   const { capitulos, loading: loadingCapitulos, atualizarCapitulo } = useCapitulos(id);
+  const { traducoes, iniciarTraducao } = useTraducoes(id);
+  const [iniciandoTraducao, setIniciandoTraducao] = useState(false);
 
   const [showConfiguracoes, setShowConfiguracoes] = useState(false);
   const [arquivosExpanded, setArquivosExpanded] = useState(false);
@@ -415,7 +419,38 @@ export const DetalheProjeto: React.FC = () => {
             ) : (
               <div className="bg-brand-bg rounded-2xl p-10 border border-gray-200 shadow-sm text-center flex flex-col items-center gap-3">
                 <Loader2 className="w-6 h-6 animate-spin text-brand-primary" />
-                <span className="text-sm text-gray-400">Capítulos sendo escritos...</span>
+                <span className="text-sm text-gray-400">Capítulos sendo escritos…</span>
+              </div>
+            )}
+
+            {/* Translation section — only for livro projects that are done */}
+            {projeto.tipo === 'livro' && projeto.status === 'concluido' && (
+              <div className="bg-brand-bg rounded-2xl border border-gray-200 shadow-sm p-6 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-brand-text-main text-sm">Tradução</h3>
+                  {!traducoes.some(t => t.idioma === 'en') && (
+                    <button
+                      disabled={iniciandoTraducao}
+                      onClick={async () => {
+                        setIniciandoTraducao(true)
+                        try { await iniciarTraducao('en') }
+                        catch (err) { console.error('Erro ao iniciar tradução:', err) }
+                        finally { setIniciandoTraducao(false) }
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-primary hover:bg-brand-hover text-brand-text-main text-xs font-bold rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      {iniciandoTraducao && <Loader2 className="w-3 h-3 animate-spin" />}
+                      Traduzir para o inglês
+                    </button>
+                  )}
+                </div>
+                {traducoes.length > 0 ? (
+                  <div className="space-y-2">
+                    {traducoes.map(t => <TraducaoCard key={t.id} traducao={t} />)}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-400">Nenhuma tradução iniciada.</p>
+                )}
               </div>
             )}
           </section>
