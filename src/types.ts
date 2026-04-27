@@ -2,7 +2,9 @@ export type ProjetoStatus =
   | 'aguardando' | 'analisando_materiais' | 'gerando_executivo'
   | 'aguardando_revisao_autor'
   | 'gerando_sumarios' | 'aguardando_aprovacao' | 'escrevendo_livro'
-  | 'concluido' | 'erro'
+  | 'concluido' | 'erro' | 'traduzindo'
+
+export type ProjetoTipo = 'livro' | 'traducao_arquivo' | 'do_executivo'
 
 export type ArquivoTipo = 'video' | 'audio' | 'pdf' | 'texto' | 'imagem'
 export type ArquivoStatus = 'pendente' | 'processado' | 'erro'
@@ -20,6 +22,8 @@ export interface Projeto {
   qtd_subcapitulos_max: number
   paginas_min: number
   paginas_max: number
+  auto_start: boolean
+  tipo: ProjetoTipo
 }
 
 export interface Arquivo {
@@ -49,4 +53,14 @@ export interface CapituloLivro {
   numero: number; titulo: string; descricao: string
   conteudo: string; resumo: string; palavras: number
   status: string; created_at: string
+}
+
+export interface Traducao {
+  id: string
+  projeto_id: string
+  idioma: string
+  status: 'traduzindo' | 'concluido' | 'erro'
+  drive_url: string | null
+  created_at: string
+  updated_at: string | null
 }
