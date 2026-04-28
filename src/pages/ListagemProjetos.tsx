@@ -5,6 +5,7 @@ import { SearchBar } from '../components/SearchBar';
 import { ProjectCard } from '../components/ProjectCard';
 import { CreateProjectModal } from '../components/CreateProjectModal';
 import { DeleteProjectModal } from '../components/DeleteProjectModal';
+import { TraduzirModal } from '../components/TraduzirModal';
 import { useProjetos } from '../hooks/useProjetos';
 import { Loader2 } from 'lucide-react';
 import type { Projeto } from '../types';
@@ -15,6 +16,20 @@ export const ListagemProjetos: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [projetoParaDeletar, setProjetoParaDeletar] = useState<Projeto | null>(null);
+    const [projetoParaTraduzir, setProjetoParaTraduzir] = useState<Projeto | null>(null);
+
+    const handleIniciarAnalise = async (projeto: Projeto) => {
+        try {
+            await fetch('https://primary-production-bd3cf.up.railway.app/webhook/ghostwriter/iniciar-analise', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ projeto_id: projeto.id }),
+            });
+            setTimeout(refetch, 2000);
+        } catch (e) {
+            console.error('Erro ao iniciar análise', e);
+        }
+    };
 
     const filteredProjetos = useMemo(() => {
         if (!searchQuery.trim()) return projetos;
@@ -87,6 +102,8 @@ export const ListagemProjetos: React.FC = () => {
                                     project={projeto}
                                     onClick={() => navigate(`/projetos/${projeto.id}`)}
                                     onDelete={setProjetoParaDeletar}
+                                    onIniciarAnalise={() => handleIniciarAnalise(projeto)}
+                                    onTraduzir={() => setProjetoParaTraduzir(projeto)}
                                 />
                             );
                         })}
@@ -104,6 +121,12 @@ export const ListagemProjetos: React.FC = () => {
                 projeto={projetoParaDeletar}
                 onClose={() => setProjetoParaDeletar(null)}
                 onSuccess={() => { refetch(); }}
+            />
+
+            <TraduzirModal
+                projeto={projetoParaTraduzir}
+                onClose={() => setProjetoParaTraduzir(null)}
+                onSuccess={() => { setTimeout(refetch, 2000); }}
             />
         </div>
     );

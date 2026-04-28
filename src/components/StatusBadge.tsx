@@ -57,6 +57,13 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
           Escrevendo Livro
         </span>
       );
+    case 'traduzindo':
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-brand-bg-badge text-amber-800 border border-brand-primary">
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          Traduzindo
+        </span>
+      );
     case 'concluido':
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
