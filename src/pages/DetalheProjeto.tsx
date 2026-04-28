@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { ProjetoStatus, ProjetoTipo } from '../types';
-import { ArrowLeft, ExternalLink, Loader2, Settings, Check, AlertCircle, ChevronDown, ChevronUp, BookOpen, FileText, LayoutList, FolderOpen, ChevronsRight } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Loader2, Settings, Check, AlertCircle, ChevronDown, ChevronUp, BookOpen, FileText, LayoutList, FolderOpen, ChevronsRight, Languages } from 'lucide-react';
 import { useProjeto } from '../hooks/useProjeto';
 import { useArquivos } from '../hooks/useArquivos';
 import { useSumarios } from '../hooks/useSumarios';
@@ -12,6 +12,8 @@ import { StatusBadge } from '../components/StatusBadge';
 import { ArquivoCard } from '../components/ArquivoCard';
 import { SumarioCard } from '../components/SumarioCard';
 import { CapituloPanel } from '../components/CapituloPanel';
+import { CapituloTraducaoPanel } from '../components/CapituloTraducaoPanel';
+import { useCapitulosTraduzidos } from '../hooks/useCapitulosTraduzidos';
 import { ProgressBar } from '../components/ProgressBar';
 import { EscreverLivroBanner } from '../components/EscreverLivroBanner';
 import { ConfiguracoesProjetoModal } from '../components/ConfiguracoesProjetoModal';
@@ -142,7 +144,7 @@ const ProjectPipeline: React.FC<{ status: ProjetoStatus; tipo: ProjetoTipo }> = 
 
 // ─── Tabs ─────────────────────────────────────────────────────────────────────
 
-type TabId = 'materiais' | 'executivo' | 'sumarios' | 'livro';
+type TabId = 'materiais' | 'executivo' | 'sumarios' | 'livro' | 'traducao';
 
 const TABS: { id: TabId; label: string; icon: React.ReactNode; available: (s: ProjetoStatus, tipo: ProjetoTipo) => boolean }[] = [
   {
@@ -169,6 +171,12 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode; available: (s: Pr
     icon: <BookOpen className="w-4 h-4" />,
     available: (s, tipo) => tipo !== 'traducao_arquivo' && ['escrevendo_livro', 'concluido'].includes(s),
   },
+  {
+    id: 'traducao',
+    label: 'Tradução',
+    icon: <Languages className="w-4 h-4" />,
+    available: (s, tipo) => tipo === 'livro' && ['concluido', 'traduzindo'].includes(s),
+  },
 ];
 
 const getInitialTab = (status: ProjetoStatus, tipo: ProjetoTipo): TabId => {
@@ -178,6 +186,73 @@ const getInitialTab = (status: ProjetoStatus, tipo: ProjetoTipo): TabId => {
   if (['gerando_executivo', 'aguardando_revisao_autor'].includes(status)) return 'executivo';
   return 'materiais';
 };
+
+// ─── Tradução Tab ─────────────────────────────────────────────────────────────
+
+const TraducaoCapitulos: React.FC<{ traducaoId: string }> = ({ traducaoId }) => {
+  const { capitulos, loading } = useCapitulosTraduzidos(traducaoId)
+  if (loading) return (
+    <div className="bg-brand-bg rounded-2xl p-8 border border-gray-200 shadow-sm flex justify-center">
+      <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+    </div>
+  )
+  return (
+    <>
+      {capitulos.map(cap => (
+        <CapituloTraducaoPanel key={cap.id} capitulo={cap} />
+      ))}
+    </>
+  )
+}
+
+interface TraducaoTabContentProps {
+  traducoes: import('../types').Traducao[]
+  projetoStatus: ProjetoStatus
+  iniciandoTraducao: boolean
+  onIniciarTraducao: () => void
+}
+
+const TraducaoTabContent: React.FC<TraducaoTabContentProps> = ({
+  traducoes, projetoStatus, iniciandoTraducao, onIniciarTraducao,
+}) => {
+  const concluida = traducoes.find(t => t.status === 'concluido')
+  const emAndamento = traducoes.find(t => t.status === 'traduzindo')
+
+  if (traducoes.length === 0) {
+    return (
+      <section className="space-y-4">
+        <div className="flex justify-end">
+          {projetoStatus === 'concluido' && (
+            <button
+              disabled={iniciandoTraducao}
+              onClick={onIniciarTraducao}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-primary hover:bg-brand-hover text-brand-text-main text-xs font-bold rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
+            >
+              {iniciandoTraducao ? <Loader2 className="w-3 h-3 animate-spin" /> : <Languages className="w-3.5 h-3.5" />}
+              Traduzir para o inglês
+            </button>
+          )}
+        </div>
+        <div className="bg-brand-bg rounded-2xl p-10 border border-gray-200 shadow-sm text-center flex flex-col items-center gap-3">
+          <Languages className="w-8 h-8 text-gray-300" />
+          <p className="text-sm text-gray-400">Nenhuma tradução iniciada.</p>
+        </div>
+      </section>
+    )
+  }
+
+  return (
+    <section className="space-y-4">
+      {emAndamento && <TraducaoCard traducao={emAndamento} />}
+      {concluida && (
+        <>
+          <TraducaoCard traducao={concluida} />
+          <TraducaoCapitulos traducaoId={concluida.id} />
+        </>
+      )}
+    </section>
+  )
+}
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -471,37 +546,22 @@ export const DetalheProjeto: React.FC = () => {
               </div>
             )}
 
-            {/* Translation section — only for livro projects that are done */}
-            {projeto.tipo === 'livro' && projeto.status === 'concluido' && (
-              <div className="bg-brand-bg rounded-2xl border border-gray-200 shadow-sm p-6 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-brand-text-main text-sm">Tradução</h3>
-                  {!traducoes.some(t => t.idioma === 'en') && (
-                    <button
-                      disabled={iniciandoTraducao}
-                      onClick={async () => {
-                        setIniciandoTraducao(true)
-                        try { await iniciarTraducao('en') }
-                        catch (err) { console.error('Erro ao iniciar tradução:', err) }
-                        finally { setIniciandoTraducao(false) }
-                      }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-primary hover:bg-brand-hover text-brand-text-main text-xs font-bold rounded-lg transition-colors disabled:opacity-50"
-                    >
-                      {iniciandoTraducao && <Loader2 className="w-3 h-3 animate-spin" />}
-                      Traduzir para o inglês
-                    </button>
-                  )}
-                </div>
-                {traducoes.length > 0 ? (
-                  <div className="space-y-2">
-                    {traducoes.map(t => <TraducaoCard key={t.id} traducao={t} />)}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-400">Nenhuma tradução iniciada.</p>
-                )}
-              </div>
-            )}
           </section>
+        )}
+
+        {/* Tab: Tradução */}
+        {activeTab === 'traducao' && (
+          <TraducaoTabContent
+            traducoes={traducoes}
+            projetoStatus={projeto.status}
+            iniciandoTraducao={iniciandoTraducao}
+            onIniciarTraducao={async () => {
+              setIniciandoTraducao(true)
+              try { await iniciarTraducao('en') }
+              catch (err) { console.error('Erro ao iniciar tradução:', err) }
+              finally { setIniciandoTraducao(false) }
+            }}
+          />
         )}
 
       </main>

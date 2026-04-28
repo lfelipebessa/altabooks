@@ -64,3 +64,12 @@ export interface Traducao {
   created_at: string
   updated_at: string | null
 }
+
+export interface CapituloTraducao {
+  id: string
+  traducao_id: string
+  numero: number
+  titulo: string
+  conteudo: string
+  created_at: string
+}

@@ -23,7 +23,7 @@ export const ListagemProjetos: React.FC = () => {
             await fetch('https://primary-production-bd3cf.up.railway.app/webhook/ghostwriter/iniciar-analise', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ projeto_id: projeto.id }),
+                body: JSON.stringify({ projetoId: projeto.id }),
             });
             setTimeout(refetch, 2000);
         } catch (e) {

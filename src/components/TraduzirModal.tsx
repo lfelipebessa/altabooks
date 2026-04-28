@@ -35,7 +35,7 @@ export const TraduzirModal: React.FC<TraduzirModalProps> = ({ projeto, onClose, 
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ projeto_id: projeto.id, idioma }),
+          body: JSON.stringify({ projetoId: projeto.id, idioma }),
         }
       );
       if (!response.ok) throw new Error('Resposta inesperada do servidor');

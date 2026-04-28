@@ -1,8 +1,11 @@
 import React from 'react'
-import { Loader2, ExternalLink, AlertCircle } from 'lucide-react'
+import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
 import type { Traducao } from '../types'
 
-const IDIOMA_LABELS: Record<string, string> = { en: 'Inglês' }
+const IDIOMA_LABELS: Record<string, string> = {
+  en: 'Inglês', es: 'Espanhol', fr: 'Francês',
+  de: 'Alemão', it: 'Italiano', ja: 'Japonês',
+}
 
 interface TraducaoCardProps {
   traducao: Traducao
@@ -16,6 +19,9 @@ export const TraducaoCard: React.FC<TraducaoCardProps> = ({ traducao }) => {
       {traducao.status === 'traduzindo' && (
         <Loader2 className="w-4 h-4 animate-spin text-brand-primary shrink-0" />
       )}
+      {traducao.status === 'concluido' && (
+        <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+      )}
       {traducao.status === 'erro' && (
         <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
       )}
@@ -27,17 +33,6 @@ export const TraducaoCard: React.FC<TraducaoCardProps> = ({ traducao }) => {
           {traducao.status === 'erro' && 'Falhou — verifique o n8n'}
         </p>
       </div>
-      {traducao.status === 'concluido' && traducao.drive_url && (
-        <a
-          href={traducao.drive_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1 text-xs font-semibold text-brand-primary hover:text-brand-hover shrink-0"
-        >
-          <ExternalLink className="w-3.5 h-3.5" />
-          Abrir
-        </a>
-      )}
     </div>
   )
 }
