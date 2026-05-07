@@ -1,18 +1,14 @@
 import React from 'react'
 import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
 import type { Traducao } from '../types'
-
-const IDIOMA_LABELS: Record<string, string> = {
-  en: 'Inglês', es: 'Espanhol', fr: 'Francês',
-  de: 'Alemão', it: 'Italiano', ja: 'Japonês',
-}
+import { labelIdioma } from '../lib/idiomas'
 
 interface TraducaoCardProps {
   traducao: Traducao
 }
 
 export const TraducaoCard: React.FC<TraducaoCardProps> = ({ traducao }) => {
-  const label = IDIOMA_LABELS[traducao.idioma] ?? traducao.idioma
+  const label = labelIdioma(traducao.idioma)
 
   return (
     <div className="flex items-center gap-3 px-4 py-3 bg-brand-bg-section rounded-xl border border-gray-200">

@@ -1,29 +1,23 @@
 import React, { useState } from 'react';
 import { X, Languages } from 'lucide-react';
 import type { Projeto } from '../types';
+import { IDIOMAS_TRADUCAO } from '../lib/idiomas';
 
 interface TraduzirModalProps {
   projeto: Projeto | null;
+  idiomasOcultos?: string[];
   onClose: () => void;
   onSuccess: () => void;
 }
 
-const IDIOMAS = [
-  { value: 'EN-US', label: 'Inglês (EUA)' },
-  { value: 'EN-GB', label: 'Inglês (Reino Unido)' },
-  { value: 'ES', label: 'Espanhol' },
-  { value: 'FR', label: 'Francês' },
-  { value: 'DE', label: 'Alemão' },
-  { value: 'IT', label: 'Italiano' },
-  { value: 'JA', label: 'Japonês' },
-];
-
-export const TraduzirModal: React.FC<TraduzirModalProps> = ({ projeto, onClose, onSuccess }) => {
-  const [idioma, setIdioma] = useState('EN-US');
+export const TraduzirModal: React.FC<TraduzirModalProps> = ({ projeto, idiomasOcultos = [], onClose, onSuccess }) => {
+  const opcoes = IDIOMAS_TRADUCAO.filter(i => !idiomasOcultos.includes(i.code));
+  const [idioma, setIdioma] = useState(opcoes[0]?.code ?? 'EN-US');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!projeto) return null;
+  if (opcoes.length === 0) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,8 +72,8 @@ export const TraduzirModal: React.FC<TraduzirModalProps> = ({ projeto, onClose, 
               onChange={(e) => setIdioma(e.target.value)}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-brand-text-main bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary"
             >
-              {IDIOMAS.map((i) => (
-                <option key={i.value} value={i.value}>{i.label}</option>
+              {opcoes.map((i) => (
+                <option key={i.code} value={i.code}>{i.label}</option>
               ))}
             </select>
           </div>

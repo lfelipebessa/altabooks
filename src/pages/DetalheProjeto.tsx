@@ -197,14 +197,30 @@ const TraducaoCapitulos: React.FC<{ traducaoId: string }> = ({ traducaoId }) => 
       <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
     </div>
   )
+  if (capitulos.length === 0) return (
+    <div className="bg-brand-bg rounded-2xl p-6 border border-gray-200 shadow-sm text-center">
+      <p className="text-sm text-gray-400">Nenhum capítulo traduzido ainda.</p>
+    </div>
+  )
   return (
-    <>
+    <div className="space-y-3">
       {capitulos.map(cap => (
         <CapituloTraducaoPanel key={cap.id} capitulo={cap} />
       ))}
-    </>
+    </div>
   )
 }
+
+const TraducaoSetor: React.FC<{ traducao: import('../types').Traducao }> = ({ traducao }) => (
+  <div className="space-y-3">
+    <TraducaoCard traducao={traducao} />
+    {traducao.status !== 'erro' && (
+      <div className="pl-2 border-l-2 border-brand-bg-card ml-2 space-y-3">
+        <TraducaoCapitulos traducaoId={traducao.id} />
+      </div>
+    )}
+  </div>
+)
 
 interface TraducaoTabContentProps {
   traducoes: import('../types').Traducao[]
@@ -215,9 +231,6 @@ interface TraducaoTabContentProps {
 const TraducaoTabContent: React.FC<TraducaoTabContentProps> = ({
   traducoes, projetoStatus, onAbrirTraduzir,
 }) => {
-  const concluida = traducoes.find(t => t.status === 'concluido')
-  const emAndamento = traducoes.find(t => t.status === 'traduzindo')
-
   if (traducoes.length === 0) {
     return (
       <section className="space-y-4">
@@ -241,14 +254,21 @@ const TraducaoTabContent: React.FC<TraducaoTabContentProps> = ({
   }
 
   return (
-    <section className="space-y-4">
-      {emAndamento && <TraducaoCard traducao={emAndamento} />}
-      {concluida && (
-        <>
-          <TraducaoCard traducao={concluida} />
-          <TraducaoCapitulos traducaoId={concluida.id} />
-        </>
-      )}
+    <section className="space-y-6">
+      <div className="flex justify-end">
+        {projetoStatus === 'concluido' && (
+          <button
+            onClick={onAbrirTraduzir}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-primary hover:bg-brand-hover text-brand-text-main text-xs font-bold rounded-lg transition-colors cursor-pointer"
+          >
+            <Languages className="w-3.5 h-3.5" />
+            Adicionar idioma
+          </button>
+        )}
+      </div>
+      {traducoes.map(t => (
+        <TraducaoSetor key={t.id} traducao={t} />
+      ))}
     </section>
   )
 }
@@ -571,6 +591,7 @@ export const DetalheProjeto: React.FC = () => {
       {showTraduzirModal && (
         <TraduzirModal
           projeto={projeto}
+          idiomasOcultos={traducoes.map(t => t.idioma)}
           onClose={() => setShowTraduzirModal(false)}
           onSuccess={() => setShowTraduzirModal(false)}
         />
