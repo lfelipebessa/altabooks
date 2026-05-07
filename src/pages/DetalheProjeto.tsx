@@ -13,6 +13,7 @@ import { ArquivoCard } from '../components/ArquivoCard';
 import { SumarioCard } from '../components/SumarioCard';
 import { CapituloPanel } from '../components/CapituloPanel';
 import { CapituloTraducaoPanel } from '../components/CapituloTraducaoPanel';
+import { TraduzirModal } from '../components/TraduzirModal';
 import { useCapitulosTraduzidos } from '../hooks/useCapitulosTraduzidos';
 import { ProgressBar } from '../components/ProgressBar';
 import { EscreverLivroBanner } from '../components/EscreverLivroBanner';
@@ -208,12 +209,11 @@ const TraducaoCapitulos: React.FC<{ traducaoId: string }> = ({ traducaoId }) => 
 interface TraducaoTabContentProps {
   traducoes: import('../types').Traducao[]
   projetoStatus: ProjetoStatus
-  iniciandoTraducao: boolean
-  onIniciarTraducao: () => void
+  onAbrirTraduzir: () => void
 }
 
 const TraducaoTabContent: React.FC<TraducaoTabContentProps> = ({
-  traducoes, projetoStatus, iniciandoTraducao, onIniciarTraducao,
+  traducoes, projetoStatus, onAbrirTraduzir,
 }) => {
   const concluida = traducoes.find(t => t.status === 'concluido')
   const emAndamento = traducoes.find(t => t.status === 'traduzindo')
@@ -224,12 +224,11 @@ const TraducaoTabContent: React.FC<TraducaoTabContentProps> = ({
         <div className="flex justify-end">
           {projetoStatus === 'concluido' && (
             <button
-              disabled={iniciandoTraducao}
-              onClick={onIniciarTraducao}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-primary hover:bg-brand-hover text-brand-text-main text-xs font-bold rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
+              onClick={onAbrirTraduzir}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-primary hover:bg-brand-hover text-brand-text-main text-xs font-bold rounded-lg transition-colors cursor-pointer"
             >
-              {iniciandoTraducao ? <Loader2 className="w-3 h-3 animate-spin" /> : <Languages className="w-3.5 h-3.5" />}
-              Traduzir para o inglês
+              <Languages className="w-3.5 h-3.5" />
+              Traduzir Livro
             </button>
           )}
         </div>
@@ -264,8 +263,8 @@ export const DetalheProjeto: React.FC = () => {
   const { arquivos, loading: loadingArquivos } = useArquivos(id);
   const { sumarios, loading: loadingSumarios, selecionarSumario, atualizarSumario } = useSumarios(id);
   const { capitulos, loading: loadingCapitulos, atualizarCapitulo } = useCapitulos(id);
-  const { traducoes, iniciarTraducao } = useTraducoes(id);
-  const [iniciandoTraducao, setIniciandoTraducao] = useState(false);
+  const { traducoes } = useTraducoes(id);
+  const [showTraduzirModal, setShowTraduzirModal] = useState(false);
 
   const [showConfiguracoes, setShowConfiguracoes] = useState(false);
   const [arquivosExpanded, setArquivosExpanded] = useState(false);
@@ -554,13 +553,7 @@ export const DetalheProjeto: React.FC = () => {
           <TraducaoTabContent
             traducoes={traducoes}
             projetoStatus={projeto.status}
-            iniciandoTraducao={iniciandoTraducao}
-            onIniciarTraducao={async () => {
-              setIniciandoTraducao(true)
-              try { await iniciarTraducao('en') }
-              catch (err) { console.error('Erro ao iniciar tradução:', err) }
-              finally { setIniciandoTraducao(false) }
-            }}
+            onAbrirTraduzir={() => setShowTraduzirModal(true)}
           />
         )}
 
@@ -572,6 +565,14 @@ export const DetalheProjeto: React.FC = () => {
           isOpen={showConfiguracoes}
           onClose={() => setShowConfiguracoes(false)}
           onSaved={() => setShowConfiguracoes(false)}
+        />
+      )}
+
+      {showTraduzirModal && (
+        <TraduzirModal
+          projeto={projeto}
+          onClose={() => setShowTraduzirModal(false)}
+          onSuccess={() => setShowTraduzirModal(false)}
         />
       )}
     </div>

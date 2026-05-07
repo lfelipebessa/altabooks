@@ -9,16 +9,17 @@ interface TraduzirModalProps {
 }
 
 const IDIOMAS = [
-  { value: 'Inglês', label: 'Inglês' },
-  { value: 'Espanhol', label: 'Espanhol' },
-  { value: 'Francês', label: 'Francês' },
-  { value: 'Alemão', label: 'Alemão' },
-  { value: 'Italiano', label: 'Italiano' },
-  { value: 'Japonês', label: 'Japonês' },
+  { value: 'EN-US', label: 'Inglês (EUA)' },
+  { value: 'EN-GB', label: 'Inglês (Reino Unido)' },
+  { value: 'ES', label: 'Espanhol' },
+  { value: 'FR', label: 'Francês' },
+  { value: 'DE', label: 'Alemão' },
+  { value: 'IT', label: 'Italiano' },
+  { value: 'JA', label: 'Japonês' },
 ];
 
 export const TraduzirModal: React.FC<TraduzirModalProps> = ({ projeto, onClose, onSuccess }) => {
-  const [idioma, setIdioma] = useState('Inglês');
+  const [idioma, setIdioma] = useState('EN-US');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
