@@ -19,6 +19,8 @@ import { ProgressBar } from '../components/ProgressBar';
 import { EscreverLivroBanner } from '../components/EscreverLivroBanner';
 import { ConfiguracoesProjetoModal } from '../components/ConfiguracoesProjetoModal';
 import { ExecutivoPanel } from '../components/ExecutivoPanel';
+import { DownloadButton } from '../components/DownloadButton';
+import { buildLivroHtml, buildTraducaoHtml } from '../lib/buildHtml';
 import logo from '../assets/logo-alta-books.png';
 
 // ─── Pipeline ────────────────────────────────────────────────────────────────
@@ -190,46 +192,51 @@ const getInitialTab = (status: ProjetoStatus, tipo: ProjetoTipo): TabId => {
 
 // ─── Tradução Tab ─────────────────────────────────────────────────────────────
 
-const TraducaoCapitulos: React.FC<{ traducaoId: string }> = ({ traducaoId }) => {
-  const { capitulos, loading } = useCapitulosTraduzidos(traducaoId)
-  if (loading) return (
-    <div className="bg-brand-bg rounded-2xl p-8 border border-gray-200 shadow-sm flex justify-center">
-      <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-    </div>
-  )
-  if (capitulos.length === 0) return (
-    <div className="bg-brand-bg rounded-2xl p-6 border border-gray-200 shadow-sm text-center">
-      <p className="text-sm text-gray-400">Nenhum capítulo traduzido ainda.</p>
-    </div>
-  )
+const TraducaoSetor: React.FC<{ traducao: import('../types').Traducao; projeto: import('../types').Projeto }> = ({ traducao, projeto }) => {
+  const { capitulos, loading } = useCapitulosTraduzidos(traducao.id)
+
   return (
     <div className="space-y-3">
-      {capitulos.map(cap => (
-        <CapituloTraducaoPanel key={cap.id} capitulo={cap} />
-      ))}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex-1">
+          <TraducaoCard traducao={traducao} />
+        </div>
+        {traducao.status === 'concluido' && capitulos.length > 0 && (
+          <DownloadButton
+            projetoNome={projeto.nome_projeto}
+            kind={`traducao-${traducao.idioma.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+            getHtml={() => buildTraducaoHtml(projeto, traducao, capitulos)}
+          />
+        )}
+      </div>
+      {traducao.status !== 'erro' && (
+        <div className="pl-2 border-l-2 border-brand-bg-card ml-2 space-y-3">
+          {loading ? (
+            <div className="bg-brand-bg rounded-2xl p-8 border border-gray-200 shadow-sm flex justify-center">
+              <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+            </div>
+          ) : capitulos.length === 0 ? (
+            <div className="bg-brand-bg rounded-2xl p-6 border border-gray-200 shadow-sm text-center">
+              <p className="text-sm text-gray-400">Nenhum capítulo traduzido ainda.</p>
+            </div>
+          ) : (
+            capitulos.map(cap => <CapituloTraducaoPanel key={cap.id} capitulo={cap} />)
+          )}
+        </div>
+      )}
     </div>
   )
 }
 
-const TraducaoSetor: React.FC<{ traducao: import('../types').Traducao }> = ({ traducao }) => (
-  <div className="space-y-3">
-    <TraducaoCard traducao={traducao} />
-    {traducao.status !== 'erro' && (
-      <div className="pl-2 border-l-2 border-brand-bg-card ml-2 space-y-3">
-        <TraducaoCapitulos traducaoId={traducao.id} />
-      </div>
-    )}
-  </div>
-)
-
 interface TraducaoTabContentProps {
   traducoes: import('../types').Traducao[]
+  projeto: import('../types').Projeto
   projetoStatus: ProjetoStatus
   onAbrirTraduzir: () => void
 }
 
 const TraducaoTabContent: React.FC<TraducaoTabContentProps> = ({
-  traducoes, projetoStatus, onAbrirTraduzir,
+  traducoes, projeto, projetoStatus, onAbrirTraduzir,
 }) => {
   if (traducoes.length === 0) {
     return (
@@ -267,7 +274,7 @@ const TraducaoTabContent: React.FC<TraducaoTabContentProps> = ({
         )}
       </div>
       {traducoes.map(t => (
-        <TraducaoSetor key={t.id} traducao={t} />
+        <TraducaoSetor key={t.id} traducao={t} projeto={projeto} />
       ))}
     </section>
   )
@@ -494,10 +501,7 @@ export const DetalheProjeto: React.FC = () => {
         {activeTab === 'executivo' && (
           <section>
             <ExecutivoPanel
-              conteudo={projeto.conteudo_executivo}
-              driveUrl={projeto.drive_executivo_url}
-              isReady={!!(projeto.drive_executivo_url || projeto.conteudo_executivo)}
-              projetoStatus={projeto.status}
+              projeto={projeto}
               onSave={salvarExecutivo}
               onConfirmarRevisado={confirmarRevisado}
             />
@@ -523,6 +527,7 @@ export const DetalheProjeto: React.FC = () => {
                   <SumarioCard
                     key={sumario.id}
                     sumario={sumario}
+                    projeto={projeto}
                     onSelecionar={selecionarSumario}
                     onAtualizar={atualizarSumario}
                   />
@@ -553,6 +558,11 @@ export const DetalheProjeto: React.FC = () => {
                       {capitulos.reduce((acc, c) => acc + c.palavras, 0).toLocaleString('pt-BR')}
                     </span> palavras no total
                   </p>
+                  <DownloadButton
+                    projetoNome={projeto.nome_projeto}
+                    kind="livro"
+                    getHtml={() => buildLivroHtml(projeto, capitulos)}
+                  />
                 </div>
                 {capitulos.map(cap => (
                   <CapituloPanel key={cap.id} capitulo={cap} onSave={atualizarCapitulo} />
@@ -572,6 +582,7 @@ export const DetalheProjeto: React.FC = () => {
         {activeTab === 'traducao' && (
           <TraducaoTabContent
             traducoes={traducoes}
+            projeto={projeto}
             projetoStatus={projeto.status}
             onAbrirTraduzir={() => setShowTraduzirModal(true)}
           />

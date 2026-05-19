@@ -1,23 +1,8 @@
 import React, { useState, useCallback, useRef, Suspense } from 'react';
-import { ChevronDown, ChevronUp, ExternalLink, Pencil, X, Loader2, Printer, Download, Upload, ArrowRight } from 'lucide-react';
-import type { ProjetoStatus } from '../types';
-
-const htmlToWordBlob = (html: string): Blob => {
-  const fullHtml = `
-    <html xmlns:o="urn:schemas-microsoft-com:office:office"
-          xmlns:w="urn:schemas-microsoft-com:office:word"
-          xmlns="http://www.w3.org/TR/REC-html40">
-      <head>
-        <meta charset="utf-8" />
-        <style>
-          body { font-family: Calibri, sans-serif; font-size: 12pt; line-height: 1.5; }
-          h1 { font-size: 18pt; } h2 { font-size: 14pt; } h3 { font-size: 13pt; }
-        </style>
-      </head>
-      <body>${html}</body>
-    </html>`;
-  return new Blob(['\ufeff', fullHtml], { type: 'application/msword' });
-};
+import { ChevronDown, ChevronUp, ExternalLink, Pencil, X, Loader2, Printer, Upload, ArrowRight } from 'lucide-react';
+import type { Projeto } from '../types';
+import { DownloadButton } from './DownloadButton';
+import { buildExecutivoHtml } from '../lib/buildHtml';
 
 const TiptapEditor = React.lazy(() =>
   import('./TiptapEditor').then(m => ({ default: m.TiptapEditor }))
@@ -26,22 +11,18 @@ const TiptapEditor = React.lazy(() =>
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 interface ExecutivoPanelProps {
-  conteudo: string | null;
-  driveUrl: string | null;
-  isReady: boolean;
-  projetoStatus: ProjetoStatus;
+  projeto: Projeto;
   onSave: (html: string) => Promise<void>;
   onConfirmarRevisado: (html: string) => Promise<void>;
 }
 
 export const ExecutivoPanel: React.FC<ExecutivoPanelProps> = ({
-  conteudo,
-  driveUrl,
-  isReady,
-  projetoStatus,
-  onSave,
-  onConfirmarRevisado,
+  projeto, onSave, onConfirmarRevisado,
 }) => {
+  const conteudo = projeto.conteudo_executivo;
+  const driveUrl = projeto.drive_executivo_url;
+  const isReady = !!(projeto.drive_executivo_url || projeto.conteudo_executivo);
+  const projetoStatus = projeto.status;
   const [expanded, setExpanded] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
@@ -49,19 +30,6 @@ export const ExecutivoPanel: React.FC<ExecutivoPanelProps> = ({
   const [uploadError, setUploadError] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleDownloadDocx = () => {
-    if (!conteudo) return;
-    const blob = htmlToWordBlob(conteudo);
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'projeto-executivo.doc';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -136,6 +104,13 @@ export const ExecutivoPanel: React.FC<ExecutivoPanelProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {conteudo && (
+            <DownloadButton
+              projetoNome={projeto.nome_projeto}
+              kind="executivo"
+              getHtml={() => buildExecutivoHtml(projeto)}
+            />
+          )}
           {saveStatus === 'saving' && (
             <span className="text-xs text-gray-400 flex items-center gap-1">
               <Loader2 className="w-3 h-3 animate-spin" /> Salvando...
@@ -196,13 +171,12 @@ export const ExecutivoPanel: React.FC<ExecutivoPanelProps> = ({
             <div className="mx-6 mt-6 rounded-xl border border-brand-primary/40 bg-brand-bg-badge px-5 py-4">
               <p className="text-sm font-semibold text-amber-900 mb-3">Revisão do autor</p>
               <div className="flex flex-wrap items-center gap-2">
-                <button
-                  onClick={handleDownloadDocx}
-                  className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors font-medium"
-                >
-                  <Download className="w-4 h-4" />
-                  Baixar DOCX
-                </button>
+                <DownloadButton
+                  projetoNome={projeto.nome_projeto}
+                  kind="executivo"
+                  getHtml={() => buildExecutivoHtml(projeto)}
+                  variant="ghost"
+                />
                 <ArrowRight className="w-4 h-4 text-amber-400 shrink-0" />
                 <span className="text-sm text-amber-800">Enviar ao autor para revisão</span>
                 <ArrowRight className="w-4 h-4 text-amber-400 shrink-0" />

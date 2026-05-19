@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { ExternalLink, ChevronDown, ChevronUp, Check, Loader2, Pencil, X } from 'lucide-react';
-import type { Sumario, Capitulo } from '../types';
+import type { Sumario, Capitulo, Projeto } from '../types';
+import { DownloadButton } from './DownloadButton';
+import { buildSumarioHtml } from '../lib/buildHtml';
 
 interface SumarioCardProps {
   sumario: Sumario;
+  projeto: Projeto;
   onSelecionar: (id: string) => Promise<void>;
   onAtualizar: (id: string, campos: { titulo_sumario?: string; capitulos?: Capitulo[] }) => Promise<void>;
 }
@@ -14,7 +17,7 @@ const ABORDAGEM_STYLES: Record<string, { bg: string; text: string; border: strin
   narrativa:   { bg: 'bg-emerald-50',text: 'text-emerald-700',border: 'border-emerald-200',label: 'Narrativa' },
 };
 
-export const SumarioCard: React.FC<SumarioCardProps> = ({ sumario, onSelecionar, onAtualizar }) => {
+export const SumarioCard: React.FC<SumarioCardProps> = ({ sumario, projeto, onSelecionar, onAtualizar }) => {
   const [expanded, setExpanded] = useState(false);
   const [selecting, setSelecting] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -121,6 +124,13 @@ export const SumarioCard: React.FC<SumarioCardProps> = ({ sumario, onSelecionar,
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {!editMode && (
+              <DownloadButton
+                projetoNome={projeto.nome_projeto}
+                kind={`sumario-${sumario.opcao}-${sumario.abordagem}`}
+                getHtml={() => buildSumarioHtml(sumario, projeto)}
+              />
+            )}
             {sumario.drive_url && !editMode && (
               <a
                 href={sumario.drive_url}
