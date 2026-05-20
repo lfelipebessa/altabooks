@@ -29,6 +29,7 @@ export function useUserModules(): UserModulesState {
     let cancelled = false
     if (authLoading) return
     if (!user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setModules(new Set())
       setLoading(false)
       return
@@ -85,6 +86,7 @@ export function useAllUsersWithModules(): AllUsersState {
 
   useEffect(() => {
     let cancelled = false
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
     setError(null)
 
