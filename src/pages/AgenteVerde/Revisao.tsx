@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, Check } from 'lucide-react'
 import { TopBar } from '../../components/TopBar'
@@ -15,15 +15,17 @@ export const Revisao: React.FC = () => {
   const lote = useMemo(() => MOCK_LOTES.find(l => l.id === id), [id])
   const itensIniciais = useMemo(() => (id && MOCK_ITEMS_BY_LOTE[id]) || [], [id])
 
+  const [prevId, setPrevId] = useState<string | undefined>(id)
   const [itens, setItens] = useState<Item[]>(itensIniciais)
   const [selecionadoId, setSelecionadoId] = useState<string | null>(itensIniciais[0]?.id ?? null)
   const [marcadosEmLote, setMarcadosEmLote] = useState<Set<string>>(new Set())
 
-  useEffect(() => {
+  if (id !== prevId) {
+    setPrevId(id)
     setItens(itensIniciais)
     setSelecionadoId(itensIniciais[0]?.id ?? null)
     setMarcadosEmLote(new Set())
-  }, [itensIniciais])
+  }
 
   const itemSelecionado = itens.find(i => i.id === selecionadoId)
 
