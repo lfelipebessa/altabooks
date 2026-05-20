@@ -3,7 +3,7 @@ import { Plus, User, UserCircle, LogOut } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import logo from '../assets/logo-alta-books.png';
 import { useAuth } from '../contexts/AuthContext';
-import { useAgenteVerdeAccess } from '../lib/agenteVerdeAccess';
+import { useUserModules } from '../lib/permissions';
 
 interface TopBarProps {
   onNewProject: () => void;
@@ -12,7 +12,7 @@ interface TopBarProps {
 export const TopBar: React.FC<TopBarProps> = ({ onNewProject }) => {
   const { signOut } = useAuth();
   const navigate = useNavigate();
-  const hasAgenteVerdeAccess = useAgenteVerdeAccess();
+  const { modules } = useUserModules();
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -44,7 +44,15 @@ export const TopBar: React.FC<TopBarProps> = ({ onNewProject }) => {
       </div>
 
       <div className="flex items-center gap-3">
-        {hasAgenteVerdeAccess && (
+        {modules.has('ghostwriter') && (
+          <Link
+            to="/"
+            className="flex items-center gap-2 text-white/70 hover:text-[#F5C518] transition-colors text-sm font-medium px-3 py-1.5 rounded"
+          >
+            Projetos
+          </Link>
+        )}
+        {modules.has('agente_verde') && (
           <Link
             to="/agente-verde"
             className="flex items-center gap-2 text-white/70 hover:text-[#F5C518] transition-colors text-sm font-medium px-3 py-1.5 rounded"
@@ -52,13 +60,23 @@ export const TopBar: React.FC<TopBarProps> = ({ onNewProject }) => {
             Agente Verde
           </Link>
         )}
-        <button
-          onClick={onNewProject}
-          className="flex items-center gap-2 bg-[#F5C518] hover:bg-[#E0B400] text-[#111111] font-bold py-1.5 px-4 rounded transition-colors text-sm cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          Novo Projeto
-        </button>
+        {modules.has('admin') && (
+          <Link
+            to="/admin/permissoes"
+            className="flex items-center gap-2 text-white/70 hover:text-[#F5C518] transition-colors text-sm font-medium px-3 py-1.5 rounded"
+          >
+            Admin
+          </Link>
+        )}
+        {modules.has('ghostwriter') && (
+          <button
+            onClick={onNewProject}
+            className="flex items-center gap-2 bg-[#F5C518] hover:bg-[#E0B400] text-[#111111] font-bold py-1.5 px-4 rounded transition-colors text-sm cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            Novo Projeto
+          </button>
+        )}
 
         <div ref={dropdownRef} className="relative">
           <button
