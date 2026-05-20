@@ -7,7 +7,8 @@ import { ListagemProjetos } from './pages/ListagemProjetos';
 import { DetalheProjeto } from './pages/DetalheProjeto';
 import { ResetPassword } from './pages/ResetPassword';
 import { Conta } from './pages/Conta';
-import { Listagem as AgenteVerdeListagem } from './pages/AgenteVerde/Listagem';
+import { Listagem as AgenteVerdeListagem } from './pages/AgenteVerde/Listagem'
+import { Revisao as AgenteVerdeRevisao } from './pages/AgenteVerde/Revisao';
 
 function App() {
   return (
@@ -45,6 +46,14 @@ function App() {
             element={
               <AgenteVerdeRoute>
                 <AgenteVerdeListagem />
+              </AgenteVerdeRoute>
+            }
+          />
+          <Route
+            path="/agente-verde/lote/:id"
+            element={
+              <AgenteVerdeRoute>
+                <AgenteVerdeRevisao />
               </AgenteVerdeRoute>
             }
           />
