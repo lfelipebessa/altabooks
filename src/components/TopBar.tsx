@@ -1,8 +1,9 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Plus, User, UserCircle, LogOut } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import logo from '../assets/logo-alta-books.png';
 import { useAuth } from '../contexts/AuthContext';
+import { useAgenteVerdeAccess } from '../lib/agenteVerdeAccess';
 
 interface TopBarProps {
   onNewProject: () => void;
@@ -11,6 +12,7 @@ interface TopBarProps {
 export const TopBar: React.FC<TopBarProps> = ({ onNewProject }) => {
   const { signOut } = useAuth();
   const navigate = useNavigate();
+  const hasAgenteVerdeAccess = useAgenteVerdeAccess();
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -42,6 +44,14 @@ export const TopBar: React.FC<TopBarProps> = ({ onNewProject }) => {
       </div>
 
       <div className="flex items-center gap-3">
+        {hasAgenteVerdeAccess && (
+          <Link
+            to="/agente-verde"
+            className="flex items-center gap-2 text-white/70 hover:text-[#F5C518] transition-colors text-sm font-medium px-3 py-1.5 rounded"
+          >
+            Agente Verde
+          </Link>
+        )}
         <button
           onClick={onNewProject}
           className="flex items-center gap-2 bg-[#F5C518] hover:bg-[#E0B400] text-[#111111] font-bold py-1.5 px-4 rounded transition-colors text-sm cursor-pointer"
