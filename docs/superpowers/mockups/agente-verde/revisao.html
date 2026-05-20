@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agente Verde — Revisão</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-primary': '#F5C518',
+            'brand-hover': '#E0B400',
+            'brand-bg-section': '#F8F9FB',
+            'brand-bg-card': '#F1F3F5',
+            'brand-bg-badge': '#FEF9E7',
+            'brand-text-main': '#111111',
+          },
+          fontFamily: {
+            sans: ['DM Sans', 'system-ui', 'sans-serif'],
+            serif: ['DM Serif Display', 'serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'DM Sans', sans-serif; }
+    .field-label { @apply text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1; }
+    .field-input { @apply w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/40 focus:border-brand-primary/40; }
+  </style>
+</head>
+<body class="bg-brand-bg-section min-h-screen pb-20">
+
+  <!-- TopBar -->
+  <header class="fixed top-0 left-0 right-0 h-[72px] bg-[#111] z-40 flex items-center justify-between px-8 shadow-md">
+    <div class="flex items-center gap-6">
+      <div class="font-serif text-2xl text-brand-primary">Alta Books</div>
+      <nav class="flex items-center gap-1 ml-6">
+        <a href="#" class="px-3 py-1.5 text-sm text-gray-400 hover:text-white rounded-lg">Projetos</a>
+        <a href="./listagem.html" class="px-3 py-1.5 text-sm text-brand-primary font-medium bg-white/5 rounded-lg">Agente Verde</a>
+      </nav>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-full bg-brand-primary text-[#111] font-bold text-sm flex items-center justify-center">CM</div>
+      <span class="text-sm text-gray-300">Cristiane Mutus</span>
+    </div>
+  </header>
+
+  <main class="max-w-[1500px] mx-auto px-6 pt-[88px]">
+
+    <!-- Header do lote -->
+    <section class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-4">
+      <div class="h-1 bg-brand-primary"></div>
+      <div class="px-6 py-4 flex items-center gap-5 flex-wrap">
+        <a href="./listagem.html" class="flex items-center gap-1.5 text-sm text-gray-500 hover:text-brand-text-main">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m7-7l-7 7 7 7"/></svg>
+          Lotes
+        </a>
+        <span class="text-gray-300">/</span>
+        <div class="flex-1 min-w-0">
+          <h1 class="font-serif text-2xl text-brand-text-main truncate">Prelo Agosto 2026</h1>
+          <p class="text-xs text-gray-500 mt-0.5">prelo-ago-2026.xlsx · 50 ISBNs · enviado ontem, 09:15</p>
+        </div>
+        <div class="flex items-center gap-4 text-sm">
+          <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="font-bold">42</span><span class="text-gray-500">prontos</span></div>
+          <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400"></span><span class="font-bold">6</span><span class="text-gray-500">pendentes</span></div>
+          <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-500"></span><span class="font-bold">2</span><span class="text-gray-500">falhas</span></div>
+          <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-gray-400"></span><span class="font-bold">14</span><span class="text-gray-500">aprovados</span></div>
+        </div>
+        <button class="flex items-center gap-2 px-4 py-2 bg-brand-primary hover:bg-brand-hover text-brand-text-main font-bold rounded-lg text-sm transition-colors">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Aprovar selecionados (3)
+        </button>
+      </div>
+    </section>
+
+    <!-- Layout master-detail -->
+    <div class="flex gap-4">
+
+      <!-- Sidebar de itens -->
+      <aside class="w-[360px] shrink-0 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col" style="height: calc(100vh - 168px); position: sticky; top: 88px;">
+
+        <!-- Filtros -->
+        <div class="p-4 border-b border-gray-100 space-y-3">
+          <div class="relative">
+            <input type="text" placeholder="Buscar por ISBN ou título..." class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/40">
+            <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <div class="flex items-center gap-1 flex-wrap">
+            <button class="px-2.5 py-1 text-xs rounded-full bg-[#111] text-brand-primary font-semibold">Prontos (42)</button>
+            <button class="px-2.5 py-1 text-xs rounded-full bg-brand-bg-card text-gray-600 hover:bg-gray-200 font-medium">Pendentes (6)</button>
+            <button class="px-2.5 py-1 text-xs rounded-full bg-brand-bg-card text-gray-600 hover:bg-gray-200 font-medium">Falhas (2)</button>
+            <button class="px-2.5 py-1 text-xs rounded-full bg-brand-bg-card text-gray-600 hover:bg-gray-200 font-medium">Aprovados (14)</button>
+          </div>
+        </div>
+
+        <!-- Lista de itens (scrollable) -->
+        <div class="overflow-y-auto flex-1 divide-y divide-gray-100">
+
+          <!-- Item selecionado -->
+          <div class="px-4 py-3 bg-brand-bg-badge border-l-4 border-brand-primary cursor-pointer">
+            <div class="flex items-start gap-3">
+              <input type="checkbox" checked class="mt-1 accent-brand-primary">
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-mono text-gray-400 mb-0.5">978-85-508-2410-7</p>
+                <p class="text-sm font-semibold text-brand-text-main leading-tight truncate">Pequenos Hábitos, Grandes Resultados</p>
+                <p class="text-xs text-gray-500 mt-0.5 truncate">Lucas Mendes · Alta Cult</p>
+                <div class="flex items-center gap-1.5 mt-2">
+                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Pronto</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Itens prontos -->
+          <div class="px-4 py-3 hover:bg-brand-bg-section cursor-pointer">
+            <div class="flex items-start gap-3">
+              <input type="checkbox" checked class="mt-1 accent-brand-primary">
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-mono text-gray-400 mb-0.5">978-85-508-2411-4</p>
+                <p class="text-sm font-medium text-brand-text-main leading-tight truncate">A Lógica do Mercado de Ações</p>
+                <p class="text-xs text-gray-500 mt-0.5 truncate">Pedro Almeida · Alta Books</p>
+                <div class="flex items-center gap-1.5 mt-2">
+                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Pronto</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="px-4 py-3 hover:bg-brand-bg-section cursor-pointer">
+            <div class="flex items-start gap-3">
+              <input type="checkbox" checked class="mt-1 accent-brand-primary">
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-mono text-gray-400 mb-0.5">978-85-508-2412-1</p>
+                <p class="text-sm font-medium text-brand-text-main leading-tight truncate">Inteligência Emocional na Prática</p>
+                <p class="text-xs text-gray-500 mt-0.5 truncate">Mariana Ribeiro · Alta Vida</p>
+                <div class="flex items-center gap-1.5 mt-2">
+                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Pronto</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="px-4 py-3 hover:bg-brand-bg-section cursor-pointer">
+            <div class="flex items-start gap-3">
+              <input type="checkbox" class="mt-1 accent-brand-primary">
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-mono text-gray-400 mb-0.5">978-85-508-2413-8</p>
+                <p class="text-sm font-medium text-brand-text-main leading-tight truncate">Liderança Quântica</p>
+                <p class="text-xs text-gray-500 mt-0.5 truncate">Roberto Tanaka · Alta Lead</p>
+                <div class="flex items-center gap-1.5 mt-2">
+                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Pronto</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="px-4 py-3 hover:bg-brand-bg-section cursor-pointer">
+            <div class="flex items-start gap-3">
+              <input type="checkbox" class="mt-1 accent-brand-primary">
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-mono text-gray-400 mb-0.5">978-85-508-2414-5</p>
+                <p class="text-sm font-medium text-brand-text-main leading-tight truncate">O Manual do Empreendedor Brasileiro</p>
+                <p class="text-xs text-gray-500 mt-0.5 truncate">Fernanda Castro · Alta Business</p>
+                <div class="flex items-center gap-1.5 mt-2">
+                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Pronto</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Item pendente -->
+          <div class="px-4 py-3 hover:bg-brand-bg-section cursor-pointer">
+            <div class="flex items-start gap-3">
+              <input type="checkbox" disabled class="mt-1 opacity-30">
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-mono text-gray-400 mb-0.5">978-85-508-2415-2</p>
+                <p class="text-sm font-medium text-gray-500 leading-tight truncate">Arquitetura de Dados</p>
+                <p class="text-xs text-gray-400 mt-0.5 truncate">— autor não detectado —</p>
+                <div class="flex items-center gap-1.5 mt-2">
+                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">Falta planilha técnica</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Falha -->
+          <div class="px-4 py-3 hover:bg-brand-bg-section cursor-pointer">
+            <div class="flex items-start gap-3">
+              <input type="checkbox" disabled class="mt-1 opacity-30">
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-mono text-gray-400 mb-0.5">978-85-508-2416-9</p>
+                <p class="text-sm font-medium text-gray-500 leading-tight truncate">A Era da Computação Quântica</p>
+                <p class="text-xs text-gray-400 mt-0.5 truncate">— PDF do miolo corrompido —</p>
+                <div class="flex items-center gap-1.5 mt-2">
+                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-red-50 text-red-700 border border-red-200">Falha</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Aprovado -->
+          <div class="px-4 py-3 hover:bg-brand-bg-section cursor-pointer opacity-60">
+            <div class="flex items-start gap-3">
+              <input type="checkbox" disabled checked class="mt-1 accent-gray-400">
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-mono text-gray-400 mb-0.5">978-85-508-2417-6</p>
+                <p class="text-sm font-medium text-brand-text-main leading-tight truncate">Mestres da Negociação</p>
+                <p class="text-xs text-gray-500 mt-0.5 truncate">Carlos Silveira · Alta Books</p>
+                <div class="flex items-center gap-1.5 mt-2">
+                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-600 border border-gray-200">
+                    <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    Aprovado
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mais alguns para preencher visualmente -->
+          <div class="px-4 py-3 hover:bg-brand-bg-section cursor-pointer">
+            <div class="flex items-start gap-3">
+              <input type="checkbox" class="mt-1 accent-brand-primary">
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-mono text-gray-400 mb-0.5">978-85-508-2418-3</p>
+                <p class="text-sm font-medium text-brand-text-main leading-tight truncate">Design Thinking Aplicado a Negócios</p>
+                <p class="text-xs text-gray-500 mt-0.5 truncate">Júlia Hoffmann · Alta Design</p>
+                <div class="flex items-center gap-1.5 mt-2">
+                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Pronto</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="px-4 py-3 hover:bg-brand-bg-section cursor-pointer">
+            <div class="flex items-start gap-3">
+              <input type="checkbox" class="mt-1 accent-brand-primary">
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-mono text-gray-400 mb-0.5">978-85-508-2419-0</p>
+                <p class="text-sm font-medium text-brand-text-main leading-tight truncate">Cozinha Funcional: Receitas Anti-inflamatórias</p>
+                <p class="text-xs text-gray-500 mt-0.5 truncate">Dra. Renata Souza · Alta Vida</p>
+                <div class="flex items-center gap-1.5 mt-2">
+                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Pronto</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="px-4 py-3 hover:bg-brand-bg-section cursor-pointer">
+            <div class="flex items-start gap-3">
+              <input type="checkbox" class="mt-1 accent-brand-primary">
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-mono text-gray-400 mb-0.5">978-85-508-2420-6</p>
+                <p class="text-sm font-medium text-brand-text-main leading-tight truncate">A História do Brasil em 12 Pratos</p>
+                <p class="text-xs text-gray-500 mt-0.5 truncate">Geraldo Aragão · Alta Cult</p>
+                <div class="flex items-center gap-1.5 mt-2">
+                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Pronto</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-center py-4 text-xs text-gray-400">
+            + 38 itens
+          </div>
+        </div>
+      </aside>
+
+      <!-- Detalhe do item -->
+      <section class="flex-1 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+
+        <!-- Header do item -->
+        <div class="h-1 bg-brand-primary"></div>
+        <div class="p-6 border-b border-gray-100">
+          <div class="flex items-start gap-5">
+            <!-- Mini capa -->
+            <div class="w-20 h-28 rounded-lg bg-gradient-to-br from-amber-100 to-amber-300 shrink-0 flex items-center justify-center shadow-md">
+              <span class="text-amber-900 text-[10px] font-bold tracking-wider rotate-[-8deg] text-center px-1.5">PEQUENOS<br>HÁBITOS</span>
+            </div>
+
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Pronto para revisão</span>
+                <span class="text-xs text-gray-400">·</span>
+                <span class="text-xs text-gray-500">processado em 28s · Claude 4.6 Sonnet</span>
+              </div>
+              <h2 class="font-serif text-2xl text-brand-text-main leading-tight">Pequenos Hábitos, Grandes Resultados</h2>
+              <p class="text-sm text-gray-500 mt-1">por <span class="font-medium text-gray-700">Lucas Mendes</span> · <span class="font-medium text-gray-700">Alta Cult</span></p>
+              <p class="text-xs font-mono text-gray-400 mt-2">ISBN físico: 978-85-508-2410-7 · ISBN digital: 978-85-508-2410-8</p>
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0">
+              <a href="#" class="flex items-center gap-1.5 text-xs text-brand-primary hover:underline">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+                Pasta no Drive
+              </a>
+              <button class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 bg-brand-bg-card hover:bg-gray-200 rounded-lg transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                Reprocessar
+              </button>
+              <button class="flex items-center gap-1.5 px-4 py-2 bg-[#111] hover:bg-[#222] text-brand-primary font-bold rounded-lg text-sm transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                Aprovar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex gap-1 px-6 py-3 border-b border-gray-100 bg-brand-bg-section/50">
+          <button class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-[#111] text-brand-primary">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            Book Info
+            <span class="ml-1 px-1.5 py-0.5 text-[10px] bg-white/10 rounded-full">comercial</span>
+          </button>
+          <button class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-brand-text-main hover:bg-white">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+            Metagráfica
+            <span class="ml-1 px-1.5 py-0.5 text-[10px] bg-gray-100 rounded-full text-gray-500">produção</span>
+          </button>
+        </div>
+
+        <!-- Conteúdo da tab Book Info -->
+        <div class="p-6 space-y-6">
+
+          <!-- Seção: Identificação -->
+          <div>
+            <h3 class="font-serif text-lg text-brand-text-main mb-1">Identificação</h3>
+            <p class="text-xs text-gray-500 mb-4">Campos extraídos da capa, miolo e planilha técnica</p>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Título</div>
+                <input type="text" value="Pequenos Hábitos, Grandes Resultados" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/40">
+              </div>
+              <div>
+                <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Subtítulo</div>
+                <input type="text" value="Um guia prático para transformar sua rotina em 30 dias" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/40">
+              </div>
+              <div>
+                <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Autor principal</div>
+                <input type="text" value="Lucas Mendes" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/40">
+              </div>
+              <div>
+                <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Marca</div>
+                <select class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/40">
+                  <option>Alta Cult</option>
+                  <option>Alta Books</option>
+                  <option>Alta Vida</option>
+                  <option>Alta Lead</option>
+                </select>
+              </div>
+              <div>
+                <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Idioma</div>
+                <input type="text" value="Português (BR)" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/40">
+              </div>
+              <div>
+                <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Páginas</div>
+                <input type="text" value="248" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/40">
+              </div>
+            </div>
+          </div>
+
+          <!-- Sinopse com indicador de IA -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <h3 class="font-serif text-lg text-brand-text-main">Sinopse</h3>
+              <span class="inline-flex items-center gap-1 text-xs text-gray-400">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                Gerado pela IA
+              </span>
+            </div>
+            <p class="text-xs text-gray-500 mb-3">Editável. Mudanças sobrescrevem a sugestão.</p>
+            <textarea rows="5" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/40">Você é o que faz repetidamente. Em "Pequenos Hábitos, Grandes Resultados", Lucas Mendes desmonta o mito da força de vontade e mostra que mudanças duradouras nascem de sistemas, não de motivação. Com base em pesquisas de neurociência comportamental e estudos de caso de atletas, executivos e artistas brasileiros, o autor entrega um método de 30 dias para construir rotinas que se sustentam mesmo nos dias difíceis. Um livro sobre disciplina sem rigidez — e sobre como dar à própria vida a direção que ela merece.</textarea>
+          </div>
+
+          <!-- BISAC -->
+          <div>
+            <h3 class="font-serif text-lg text-brand-text-main mb-1">Classificação BISAC</h3>
+            <p class="text-xs text-gray-500 mb-3">Sugestões baseadas em conteúdo do miolo</p>
+            <div class="space-y-2">
+              <div class="flex items-center gap-3 p-3 bg-brand-bg-badge rounded-lg border border-brand-primary/30">
+                <span class="font-mono text-xs font-bold bg-white px-2 py-1 rounded border border-gray-200">SEL027000</span>
+                <span class="text-sm flex-1">SELF-HELP / Personal Growth / Success</span>
+                <span class="text-xs text-emerald-700 font-semibold">Principal</span>
+              </div>
+              <div class="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200">
+                <span class="font-mono text-xs font-bold bg-brand-bg-card px-2 py-1 rounded border border-gray-200">SEL031000</span>
+                <span class="text-sm flex-1">SELF-HELP / Personal Growth / General</span>
+                <button class="text-xs text-gray-400 hover:text-red-500">remover</button>
+              </div>
+              <button class="text-xs text-gray-500 hover:text-brand-text-main flex items-center gap-1 mt-2">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Adicionar BISAC
+              </button>
+            </div>
+          </div>
+
+          <!-- Palavras-chave -->
+          <div>
+            <h3 class="font-serif text-lg text-brand-text-main mb-1">Palavras-chave</h3>
+            <p class="text-xs text-gray-500 mb-3">Pra busca em marketplaces. 8 sugeridas pela IA — você ajusta livremente.</p>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-brand-bg-card text-gray-700 border border-gray-200">hábitos<button class="text-gray-400 hover:text-red-500 ml-0.5">×</button></span>
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-brand-bg-card text-gray-700 border border-gray-200">desenvolvimento pessoal<button class="text-gray-400 hover:text-red-500 ml-0.5">×</button></span>
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-brand-bg-card text-gray-700 border border-gray-200">disciplina<button class="text-gray-400 hover:text-red-500 ml-0.5">×</button></span>
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-brand-bg-card text-gray-700 border border-gray-200">produtividade<button class="text-gray-400 hover:text-red-500 ml-0.5">×</button></span>
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-brand-bg-card text-gray-700 border border-gray-200">rotina<button class="text-gray-400 hover:text-red-500 ml-0.5">×</button></span>
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-brand-bg-card text-gray-700 border border-gray-200">neurociência<button class="text-gray-400 hover:text-red-500 ml-0.5">×</button></span>
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-brand-bg-card text-gray-700 border border-gray-200">comportamento<button class="text-gray-400 hover:text-red-500 ml-0.5">×</button></span>
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-brand-bg-card text-gray-700 border border-gray-200">autoajuda<button class="text-gray-400 hover:text-red-500 ml-0.5">×</button></span>
+              <input type="text" placeholder="+ palavra-chave" class="px-2.5 py-1 text-xs rounded-full border border-dashed border-gray-300 focus:outline-none focus:border-brand-primary w-32">
+            </div>
+          </div>
+
+          <!-- Comercial: físico + digital lado a lado -->
+          <div>
+            <h3 class="font-serif text-lg text-brand-text-main mb-1">Dados comerciais</h3>
+            <p class="text-xs text-gray-500 mb-3">Cada ISBN gera dois cadastros — físico e digital</p>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="bg-brand-bg-section rounded-xl p-4 border border-gray-200">
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="w-7 h-7 rounded-full bg-[#111] text-brand-primary text-xs font-bold flex items-center justify-center">📕</span>
+                  <span class="font-semibold text-sm">Físico</span>
+                </div>
+                <div class="space-y-3">
+                  <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">ISBN físico</div>
+                    <input type="text" value="978-85-508-2410-7" class="w-full text-sm font-mono border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/40">
+                  </div>
+                  <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Preço (R$)</div>
+                    <input type="text" value="69,90" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/40">
+                  </div>
+                  <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Tiragem inicial</div>
+                    <input type="text" value="3.000" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/40">
+                  </div>
+                </div>
+              </div>
+              <div class="bg-brand-bg-section rounded-xl p-4 border border-gray-200">
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="w-7 h-7 rounded-full bg-[#111] text-brand-primary text-xs font-bold flex items-center justify-center">📱</span>
+                  <span class="font-semibold text-sm">Digital</span>
+                </div>
+                <div class="space-y-3">
+                  <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">ISBN digital</div>
+                    <input type="text" value="978-85-508-2410-8" class="w-full text-sm font-mono border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/40">
+                  </div>
+                  <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Preço (R$)</div>
+                    <input type="text" value="44,90" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/40">
+                  </div>
+                  <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Formato</div>
+                    <select class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/40">
+                      <option>ePub</option>
+                      <option>PDF</option>
+                      <option>MOBI</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer com versionamento -->
+          <div class="pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
+            <span>Última alteração: agora · 7 versões anteriores</span>
+            <button class="text-gray-500 hover:text-brand-text-main">Ver histórico</button>
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+
+    <p class="text-center text-xs text-gray-400 pt-6">
+      ← <a href="./index.html" class="underline hover:text-brand-text-main">voltar pro índice de mockups</a> ·
+      <a href="./listagem.html" class="underline hover:text-brand-text-main">listagem de lotes</a>
+    </p>
+
+  </main>
+</body>
+</html>
