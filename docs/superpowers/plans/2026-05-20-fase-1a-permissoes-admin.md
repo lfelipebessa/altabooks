@@ -116,33 +116,41 @@ create policy "users read own modules"
   to authenticated
   using (user_id = auth.uid());
 
+-- IMPORTANTE: funcao SECURITY DEFINER evita recursao infinita na policy
+-- (policy em user_modules consultando user_modules diretamente dispara
+-- ERROR 42P17). A funcao roda com privilegios do owner, bypassando RLS.
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists (
+    select 1 from public.user_modules
+    where user_id = auth.uid() and module_slug = 'admin'
+  );
+$$;
+
+revoke execute on function public.is_admin() from public;
+grant execute on function public.is_admin() to authenticated;
+
 drop policy if exists "admin read all modules" on public.user_modules;
 create policy "admin read all modules"
   on public.user_modules for select
   to authenticated
-  using (
-    exists (
-      select 1 from public.user_modules m2
-      where m2.user_id = auth.uid() and m2.module_slug = 'admin'
-    )
-  );
+  using (public.is_admin());
 
 drop policy if exists "admin write modules" on public.user_modules;
 create policy "admin write modules"
   on public.user_modules for all
   to authenticated
-  using (
-    exists (
-      select 1 from public.user_modules m2
-      where m2.user_id = auth.uid() and m2.module_slug = 'admin'
-    )
-  )
-  with check (
-    exists (
-      select 1 from public.user_modules m2
-      where m2.user_id = auth.uid() and m2.module_slug = 'admin'
-    )
-  );
+  using (public.is_admin())
+  with check (public.is_admin());
+
+-- handle_new_user: trava EXECUTE pra so postgres/service_role
+-- (impedir chamada via /rest/v1/rpc/handle_new_user)
+revoke execute on function public.handle_new_user() from public;
 
 -- =========================================
 -- Seed inicial

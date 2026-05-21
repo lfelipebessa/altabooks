@@ -127,33 +127,37 @@ create policy "users read own modules"
   to authenticated
   using (user_id = auth.uid());
 
+-- IMPORTANTE: a checagem de admin precisa de funcao SECURITY DEFINER pra
+-- evitar recursao infinita (policy em user_modules consultando user_modules
+-- diretamente dispara ERROR 42P17 no Postgres).
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists (
+    select 1 from public.user_modules
+    where user_id = auth.uid() and module_slug = 'admin'
+  );
+$$;
+
+revoke execute on function public.is_admin() from public;
+grant execute on function public.is_admin() to authenticated;
+
 -- user_modules: admin le tudo
 create policy "admin read all modules"
   on public.user_modules for select
   to authenticated
-  using (
-    exists (
-      select 1 from public.user_modules
-      where user_id = auth.uid() and module_slug = 'admin'
-    )
-  );
+  using (public.is_admin());
 
 -- user_modules: so admin escreve
 create policy "admin write modules"
   on public.user_modules for all
   to authenticated
-  using (
-    exists (
-      select 1 from public.user_modules
-      where user_id = auth.uid() and module_slug = 'admin'
-    )
-  )
-  with check (
-    exists (
-      select 1 from public.user_modules
-      where user_id = auth.uid() and module_slug = 'admin'
-    )
-  );
+  using (public.is_admin())
+  with check (public.is_admin());
 ```
 
 **Bootstrap (chicken-and-egg):** o primeiro admin precisa ser criado fora das policies. Migration faz isso via insert direto (roda com service_role):
