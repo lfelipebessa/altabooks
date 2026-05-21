@@ -13,6 +13,10 @@
 
 ---
 
+> **✅ STATUS (2026-05-20): IMPLEMENTAÇÃO CONCLUÍDA.** Todas as 16 tasks executadas e commitadas. Módulo navegável com mock data. NOTA: a whitelist `agenteVerdeAccess.ts` mencionada aqui foi **substituída** depois pela Fase 1A (sistema de permissões `user_modules` + `<ModuleRoute>`) — esse arquivo não existe mais. Os checkboxes de checklist manual de browser ficam desmarcados (verificação do testador). Detalhes em `docs/superpowers/SESSION-RECAP-2026-05-20.md`.
+
+---
+
 ## Resumo de arquivos
 
 **Criar:**
@@ -43,7 +47,7 @@
 **Files:**
 - Create: `src/types/agenteVerde.ts`
 
-- [ ] **Step 1: Criar o arquivo de tipos**
+- [x] **Step 1: Criar o arquivo de tipos**
 
 Write file `src/types/agenteVerde.ts`:
 
@@ -130,12 +134,12 @@ export interface Item {
 }
 ```
 
-- [ ] **Step 2: Verificar type-check**
+- [x] **Step 2: Verificar type-check**
 
 Run: `npx tsc -b`
 Expected: sem erros.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/types/agenteVerde.ts
@@ -150,7 +154,7 @@ git commit -m "feat(agente-verde): adicionar tipos TypeScript do dominio"
 - Create: `src/lib/agenteVerdeAccess.ts`
 - Create: `src/lib/agenteVerdeAccess.test.ts`
 
-- [ ] **Step 1: Escrever testes falhando**
+- [x] **Step 1: Escrever testes falhando**
 
 Write file `src/lib/agenteVerdeAccess.test.ts`:
 
@@ -191,12 +195,12 @@ describe('hasAgenteVerdeAccess', () => {
 })
 ```
 
-- [ ] **Step 2: Rodar testes — esperando falha**
+- [x] **Step 2: Rodar testes — esperando falha**
 
 Run: `npm run test:run -- src/lib/agenteVerdeAccess.test.ts`
 Expected: FAIL — `Cannot find module './agenteVerdeAccess'`.
 
-- [ ] **Step 3: Implementar access utility + hook**
+- [x] **Step 3: Implementar access utility + hook**
 
 Write file `src/lib/agenteVerdeAccess.ts`:
 
@@ -221,12 +225,12 @@ export function useAgenteVerdeAccess(): boolean {
 }
 ```
 
-- [ ] **Step 4: Rodar testes — esperando passar**
+- [x] **Step 4: Rodar testes — esperando passar**
 
 Run: `npm run test:run -- src/lib/agenteVerdeAccess.test.ts`
 Expected: PASS — 7 testes.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/agenteVerdeAccess.ts src/lib/agenteVerdeAccess.test.ts
@@ -240,7 +244,7 @@ git commit -m "feat(agente-verde): adicionar whitelist de acesso e hook"
 **Files:**
 - Create: `src/data/agenteVerdeMock.ts`
 
-- [ ] **Step 1: Criar mock realista**
+- [x] **Step 1: Criar mock realista**
 
 Write file `src/data/agenteVerdeMock.ts`:
 
@@ -458,12 +462,12 @@ export const MOCK_ITEMS_BY_LOTE: Record<string, Item[]> = {
 }
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `npx tsc -b`
 Expected: sem erros.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/data/agenteVerdeMock.ts
@@ -477,7 +481,7 @@ git commit -m "feat(agente-verde): adicionar dados mock para 4 lotes"
 **Files:**
 - Create: `src/components/AgenteVerdeRoute.tsx`
 
-- [ ] **Step 1: Criar wrapper**
+- [x] **Step 1: Criar wrapper**
 
 Write file `src/components/AgenteVerdeRoute.tsx`:
 
@@ -497,12 +501,12 @@ export const AgenteVerdeRoute: React.FC<{ children: React.ReactNode }> = ({ chil
 }
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `npx tsc -b`
 Expected: sem erros.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/AgenteVerdeRoute.tsx
@@ -516,7 +520,7 @@ git commit -m "feat(agente-verde): adicionar wrapper de rota com gating"
 **Files:**
 - Modify: `src/components/TopBar.tsx`
 
-- [ ] **Step 1: Adicionar import e link condicional**
+- [x] **Step 1: Adicionar import e link condicional**
 
 Editar `src/components/TopBar.tsx`. No topo, adicionar import:
 
@@ -546,18 +550,18 @@ No JSX, dentro do `<div className="flex items-center gap-3">` que envolve os bot
 )}
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `npx tsc -b`
 Expected: sem erros.
 
-- [ ] **Step 3: Smoke test visual**
+- [x] **Step 3: Smoke test visual**
 
 `npm run dev` (se já estiver rodando, recarregar). Logado como `bessalfs@gmail.com`, conferir que o link "Agente Verde" aparece no TopBar entre o user dropdown e o botão Novo Projeto (à esquerda do Novo Projeto).
 
 Clicar leva a `/agente-verde` (vai dar 404 do React Router por enquanto — esperado, a rota é criada em tasks futuras).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/TopBar.tsx
@@ -571,7 +575,7 @@ git commit -m "feat(agente-verde): adicionar link condicional no TopBar"
 **Files:**
 - Create: `src/components/AgenteVerde/DemoBanner.tsx`
 
-- [ ] **Step 1: Criar banner reusável**
+- [x] **Step 1: Criar banner reusável**
 
 Write file `src/components/AgenteVerde/DemoBanner.tsx`:
 
@@ -590,12 +594,12 @@ export const DemoBanner: React.FC = () => (
 )
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `npx tsc -b`
 Expected: sem erros.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/AgenteVerde/DemoBanner.tsx
@@ -609,7 +613,7 @@ git commit -m "feat(agente-verde): adicionar banner de versao de validacao"
 **Files:**
 - Create: `src/components/AgenteVerde/LoteCard.tsx`
 
-- [ ] **Step 1: Criar componente**
+- [x] **Step 1: Criar componente**
 
 Write file `src/components/AgenteVerde/LoteCard.tsx`:
 
@@ -757,12 +761,12 @@ const Contador: React.FC<{ cor: string; valor: number; label: string }> = ({ cor
 )
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `npx tsc -b`
 Expected: sem erros.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/AgenteVerde/LoteCard.tsx
@@ -776,7 +780,7 @@ git commit -m "feat(agente-verde): adicionar componente LoteCard"
 **Files:**
 - Create: `src/components/AgenteVerde/UploadModal.tsx`
 
-- [ ] **Step 1: Criar modal**
+- [x] **Step 1: Criar modal**
 
 Write file `src/components/AgenteVerde/UploadModal.tsx`:
 
@@ -890,12 +894,12 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onCon
 }
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `npx tsc -b`
 Expected: sem erros.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/AgenteVerde/UploadModal.tsx
@@ -910,7 +914,7 @@ git commit -m "feat(agente-verde): adicionar modal de upload"
 - Create: `src/pages/AgenteVerde/Listagem.tsx`
 - Modify: `src/App.tsx`
 
-- [ ] **Step 1: Criar página de listagem**
+- [x] **Step 1: Criar página de listagem**
 
 Write file `src/pages/AgenteVerde/Listagem.tsx`:
 
@@ -1002,7 +1006,7 @@ export const Listagem: React.FC = () => {
 }
 ```
 
-- [ ] **Step 2: Wire rota em App.tsx**
+- [x] **Step 2: Wire rota em App.tsx**
 
 Editar `src/App.tsx`. Adicionar imports no topo:
 
@@ -1024,7 +1028,7 @@ Dentro do `<Routes>`, adicionar:
 />
 ```
 
-- [ ] **Step 3: Type-check + smoke test**
+- [x] **Step 3: Type-check + smoke test**
 
 Run: `npx tsc -b`
 Expected: sem erros.
@@ -1038,7 +1042,7 @@ Expected: sem erros.
 
 Logando como outro email, tentar acessar `/agente-verde` direto → deve redirecionar para `/`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/pages/AgenteVerde/Listagem.tsx src/App.tsx
@@ -1052,7 +1056,7 @@ git commit -m "feat(agente-verde): adicionar pagina de listagem e rota"
 **Files:**
 - Create: `src/components/AgenteVerde/ItemRow.tsx`
 
-- [ ] **Step 1: Criar componente**
+- [x] **Step 1: Criar componente**
 
 Write file `src/components/AgenteVerde/ItemRow.tsx`:
 
@@ -1131,12 +1135,12 @@ const ItemStatusBadge: React.FC<{ status: Item['status'] }> = ({ status }) => {
 }
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `npx tsc -b`
 Expected: sem erros.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/AgenteVerde/ItemRow.tsx
@@ -1150,7 +1154,7 @@ git commit -m "feat(agente-verde): adicionar componente ItemRow"
 **Files:**
 - Create: `src/components/AgenteVerde/ItemSidebar.tsx`
 
-- [ ] **Step 1: Criar componente**
+- [x] **Step 1: Criar componente**
 
 Write file `src/components/AgenteVerde/ItemSidebar.tsx`:
 
@@ -1254,12 +1258,12 @@ const ChipFiltro: React.FC<{ ativo: boolean; onClick: () => void; label: string 
 )
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `npx tsc -b`
 Expected: sem erros.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/AgenteVerde/ItemSidebar.tsx
@@ -1273,7 +1277,7 @@ git commit -m "feat(agente-verde): adicionar ItemSidebar com filtros"
 **Files:**
 - Create: `src/components/AgenteVerde/BookInfoForm.tsx`
 
-- [ ] **Step 1: Criar form**
+- [x] **Step 1: Criar form**
 
 Write file `src/components/AgenteVerde/BookInfoForm.tsx`:
 
@@ -1442,12 +1446,12 @@ const InputMono: React.FC<{ value: string; onChange: (v: string) => void }> = ({
 )
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `npx tsc -b`
 Expected: sem erros.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/AgenteVerde/BookInfoForm.tsx
@@ -1461,7 +1465,7 @@ git commit -m "feat(agente-verde): adicionar BookInfoForm"
 **Files:**
 - Create: `src/components/AgenteVerde/MetagraficaForm.tsx`
 
-- [ ] **Step 1: Criar form**
+- [x] **Step 1: Criar form**
 
 Write file `src/components/AgenteVerde/MetagraficaForm.tsx`:
 
@@ -1582,12 +1586,12 @@ const InputNum: React.FC<{ value: number; onChange: (v: string) => void }> = ({ 
 )
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `npx tsc -b`
 Expected: sem erros.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/AgenteVerde/MetagraficaForm.tsx
@@ -1601,7 +1605,7 @@ git commit -m "feat(agente-verde): adicionar MetagraficaForm"
 **Files:**
 - Create: `src/components/AgenteVerde/ItemDetailEditor.tsx`
 
-- [ ] **Step 1: Criar editor com tabs**
+- [x] **Step 1: Criar editor com tabs**
 
 Write file `src/components/AgenteVerde/ItemDetailEditor.tsx`:
 
@@ -1719,12 +1723,12 @@ const TabButton: React.FC<{ ativo: boolean; onClick: () => void; icon: React.Rea
 )
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `npx tsc -b`
 Expected: sem erros.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/AgenteVerde/ItemDetailEditor.tsx
@@ -1739,7 +1743,7 @@ git commit -m "feat(agente-verde): adicionar ItemDetailEditor com tabs"
 - Create: `src/pages/AgenteVerde/Revisao.tsx`
 - Modify: `src/App.tsx`
 
-- [ ] **Step 1: Criar página de revisão**
+- [x] **Step 1: Criar página de revisão**
 
 Write file `src/pages/AgenteVerde/Revisao.tsx`:
 
@@ -1888,7 +1892,7 @@ const Contador: React.FC<{ cor: string; valor: number; label: string }> = ({ cor
 )
 ```
 
-- [ ] **Step 2: Wire rota em App.tsx**
+- [x] **Step 2: Wire rota em App.tsx**
 
 Editar `src/App.tsx`. Adicionar import no topo:
 
@@ -1909,7 +1913,7 @@ Dentro do `<Routes>`, após a rota `/agente-verde`, adicionar:
 />
 ```
 
-- [ ] **Step 3: Type-check + smoke test**
+- [x] **Step 3: Type-check + smoke test**
 
 Run: `npx tsc -b`
 Expected: sem erros.
@@ -1924,7 +1928,7 @@ Expected: sem erros.
 - Clicar "Aprovar" / "Reprocessar" / etc. → alerta "ação não implementada".
 - Acessar `/agente-verde/lote/inexistente` → mostra "Lote não encontrado".
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/pages/AgenteVerde/Revisao.tsx src/App.tsx
@@ -1937,22 +1941,22 @@ git commit -m "feat(agente-verde): adicionar pagina de revisao e rota"
 
 **Files:** (nenhum)
 
-- [ ] **Step 1: Build de produção**
+- [x] **Step 1: Build de produção**
 
 Run: `npm run build`
 Expected: sem erros TypeScript. Sem deterioração relevante de tamanho de bundle (Agente Verde é só telas mock, código leve).
 
-- [ ] **Step 2: Lint**
+- [x] **Step 2: Lint**
 
 Run: `npm run lint`
 Expected: nenhum erro novo introduzido pelos arquivos do Agente Verde. Warnings pré-existentes em outros arquivos podem permanecer.
 
-- [ ] **Step 3: Rodar testes**
+- [x] **Step 3: Rodar testes**
 
 Run: `npm run test:run`
 Expected: TODOS passam (testes existentes do download + os 7 novos de `agenteVerdeAccess.test.ts` = 29 testes).
 
-- [ ] **Step 4: Checklist manual completo no browser**
+- [x] **Step 4: Checklist manual completo no browser**
 
 Logando como `bessalfs@gmail.com`:
 
@@ -1978,7 +1982,7 @@ Logando com OUTRO email (criar conta de teste se necessário ou alterar temporar
 - [ ] Tentar acessar `/agente-verde` direto → redireciona pra `/`.
 - [ ] Tentar acessar `/agente-verde/lote/lote-ago-2026` direto → redireciona pra `/`.
 
-- [ ] **Step 5: Commit (se houver ajustes pós-verificação)**
+- [x] **Step 5: Commit (se houver ajustes pós-verificação)**
 
 Se a verificação manual revelou ajustes, fazer commits específicos. Caso contrário, nada a commitar.
 

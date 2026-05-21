@@ -12,6 +12,10 @@
 
 ---
 
+> **✅ STATUS (2026-05-20): IMPLEMENTAÇÃO CONCLUÍDA.** Todos os steps de código/migration/commit executados e commitados. Migration aplicada no Supabase de produção (`tddolcrzmczvoqxkajic`) incluindo o fix de RLS recursion (`is_admin()`). Os checkboxes de **checklist manual de browser** (Task 9, Step 4) ficam desmarcados — são pra o testador confirmar no navegador. Detalhes em `docs/superpowers/SESSION-RECAP-2026-05-20.md`.
+
+---
+
 ## Resumo de arquivos
 
 **Criar:**
@@ -41,7 +45,7 @@
 
 **Files:** (nenhum no repo — toda a mudança é no banco via MCP)
 
-- [ ] **Step 1: Aplicar migration `fase_1a_permissoes`**
+- [x] **Step 1: Aplicar migration `fase_1a_permissoes`**
 
 Usar a MCP tool `mcp__plugin_supabase_supabase__apply_migration` com:
 
@@ -174,7 +178,7 @@ select id, 'ghostwriter' from auth.users
 on conflict do nothing;
 ```
 
-- [ ] **Step 2: Verificar via MCP**
+- [x] **Step 2: Verificar via MCP**
 
 Usar `mcp__plugin_supabase_supabase__list_tables` (schemas: `['public']`) e confirmar que `profiles` e `user_modules` aparecem.
 
@@ -189,11 +193,11 @@ order by p.email;
 
 Expected: bessalfs@gmail.com aparece com `{admin, agente_verde, ghostwriter}`. Demais usuários (se houver) com `{ghostwriter}`.
 
-- [ ] **Step 3: Verificar advisors**
+- [x] **Step 3: Verificar advisors**
 
 Usar `mcp__plugin_supabase_supabase__get_advisors` com `type='security'`. Esperado: sem novos avisos críticos relacionados às tabelas criadas (RLS está habilitada).
 
-- [ ] **Step 4: Nada a commitar no repo**
+- [x] **Step 4: Nada a commitar no repo**
 
 A migration vive no Supabase. Pular pro Task 2.
 
@@ -204,7 +208,7 @@ A migration vive no Supabase. Pular pro Task 2.
 **Files:**
 - Create: `src/lib/permissions.ts`
 
-- [ ] **Step 1: Criar arquivo com constante MODULES + hooks**
+- [x] **Step 1: Criar arquivo com constante MODULES + hooks**
 
 Write file `src/lib/permissions.ts`:
 
@@ -347,12 +351,12 @@ export async function revokeModule(userId: string, slug: string): Promise<void> 
 }
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `npx tsc -b`
 Expected: sem erros.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/lib/permissions.ts
@@ -366,7 +370,7 @@ git commit -m "feat(permissions): adicionar hooks e MODULES constant"
 **Files:**
 - Create: `src/components/ModuleRoute.tsx`
 
-- [ ] **Step 1: Criar componente**
+- [x] **Step 1: Criar componente**
 
 Write file `src/components/ModuleRoute.tsx`:
 
@@ -409,12 +413,12 @@ const ModuleGuard: React.FC<ModuleRouteProps> = ({ slug, children }) => {
 }
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `npx tsc -b`
 Expected: sem erros.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/ModuleRoute.tsx
@@ -428,7 +432,7 @@ git commit -m "feat(permissions): adicionar ModuleRoute generico"
 **Files:**
 - Create: `src/pages/SemAcesso.tsx`
 
-- [ ] **Step 1: Criar página**
+- [x] **Step 1: Criar página**
 
 Write file `src/pages/SemAcesso.tsx`:
 
@@ -495,12 +499,12 @@ export const SemAcesso: React.FC = () => {
 }
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `npx tsc -b`
 Expected: sem erros.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/pages/SemAcesso.tsx
@@ -514,7 +518,7 @@ git commit -m "feat(permissions): adicionar pagina sem-acesso"
 **Files:**
 - Create: `src/pages/Admin/Permissoes.tsx`
 
-- [ ] **Step 1: Criar pasta e arquivo**
+- [x] **Step 1: Criar pasta e arquivo**
 
 Criar diretório `src/pages/Admin/` se não existir.
 
@@ -690,14 +694,14 @@ export const Permissoes: React.FC = () => {
 }
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 A página depende dos hooks (Task 2) e do TopBar (existente). Não depende de App.tsx ter as rotas novas ainda — é renderizável em isolamento.
 
 Run: `npx tsc -b`
 Expected: sem erros.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/pages/Admin/Permissoes.tsx
@@ -711,7 +715,7 @@ git commit -m "feat(permissions): adicionar pagina admin de permissoes"
 **Files:**
 - Modify: `src/App.tsx`
 
-- [ ] **Step 1: Reescrever App.tsx completo**
+- [x] **Step 1: Reescrever App.tsx completo**
 
 Editar `src/App.tsx`. Substituir o conteúdo todo por:
 
@@ -771,12 +775,12 @@ Observações importantes:
 - O import de `AdminPermissoes` agora resolve (Task 5 criou a página).
 - O import de `AgenteVerdeRoute` foi removido — ele será deletado na Task 8.
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `npx tsc -b`
 Expected: sem erros.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/App.tsx
@@ -790,13 +794,13 @@ git commit -m "feat(permissions): rotas refatoradas com ModuleRoute"
 **Files:**
 - Modify: `src/components/TopBar.tsx`
 
-- [ ] **Step 1: Reler TopBar.tsx primeiro**
+- [x] **Step 1: Reler TopBar.tsx primeiro**
 
 Run: `cat src/components/TopBar.tsx`
 
 Tomar nota da estrutura atual (header, botão Novo Projeto, user dropdown).
 
-- [ ] **Step 2: Editar imports**
+- [x] **Step 2: Editar imports**
 
 No topo do arquivo, remover:
 ```tsx
@@ -813,7 +817,7 @@ Adicionar:
 import { useUserModules } from '../lib/permissions'
 ```
 
-- [ ] **Step 3: Substituir o hook antigo**
+- [x] **Step 3: Substituir o hook antigo**
 
 Dentro do componente `TopBar`, localizar a linha:
 ```tsx
@@ -825,7 +829,7 @@ Substituir por:
 const { modules } = useUserModules()
 ```
 
-- [ ] **Step 4: Trocar o link condicional do Agente Verde**
+- [x] **Step 4: Trocar o link condicional do Agente Verde**
 
 Substituir o bloco:
 ```tsx
@@ -879,7 +883,7 @@ Por um bloco mais amplo com 3 links + botão Novo Projeto condicional. Localizar
 
 Manter o `<div ref={dropdownRef} ...>` do user dropdown logo depois, sem alterar.
 
-- [ ] **Step 5: Type-check + commit**
+- [x] **Step 5: Type-check + commit**
 
 Run: `npx tsc -b`
 Expected: sem erros.
@@ -898,12 +902,12 @@ git commit -m "feat(permissions): TopBar com links condicionais dinamicos"
 - Delete: `src/lib/agenteVerdeAccess.test.ts`
 - Delete: `src/components/AgenteVerdeRoute.tsx`
 
-- [ ] **Step 1: Confirmar que nada mais referencia esses arquivos**
+- [x] **Step 1: Confirmar que nada mais referencia esses arquivos**
 
 Run: `grep -r "agenteVerdeAccess\|AgenteVerdeRoute" src/`
 Expected: zero matches. Se houver, corrigir antes de deletar (provavelmente um import esquecido).
 
-- [ ] **Step 2: Deletar os 3 arquivos**
+- [x] **Step 2: Deletar os 3 arquivos**
 
 ```bash
 rm src/lib/agenteVerdeAccess.ts
@@ -911,7 +915,7 @@ rm src/lib/agenteVerdeAccess.test.ts
 rm src/components/AgenteVerdeRoute.tsx
 ```
 
-- [ ] **Step 3: Verificar build + testes**
+- [x] **Step 3: Verificar build + testes**
 
 Run: `npx tsc -b`
 Expected: sem erros.
@@ -919,7 +923,7 @@ Expected: sem erros.
 Run: `npm run test:run`
 Expected: agora são **22 testes passando** (29 menos os 7 do `agenteVerdeAccess.test.ts` removido).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A
@@ -932,22 +936,22 @@ git commit -m "refactor(permissions): remover whitelist hardcoded do Agente Verd
 
 **Files:** (nenhum)
 
-- [ ] **Step 1: Build**
+- [x] **Step 1: Build**
 
 Run: `npm run build`
 Expected: sem erros TypeScript.
 
-- [ ] **Step 2: Lint**
+- [x] **Step 2: Lint**
 
 Run: `npm run lint`
 Expected: nenhum erro novo. Os 3 warnings pré-existentes em hooks antigos (`useCapitulos`, `useCapitulosTraduzidos`, `DetalheProjeto`) podem permanecer.
 
-- [ ] **Step 3: Testes**
+- [x] **Step 3: Testes**
 
 Run: `npm run test:run`
 Expected: 22 passando.
 
-- [ ] **Step 4: Checklist manual no browser**
+- [x] **Step 4: Checklist manual no browser**
 
 Subir o dev server (se não estiver): `npm run dev`. Abrir http://localhost:5173.
 
@@ -979,7 +983,7 @@ Subir o dev server (se não estiver): `npm run dev`. Abrir http://localhost:5173
 - [ ] `/` é acessível
 - [ ] `/agente-verde` continua redirecionando pra `/sem-acesso` (não foi liberado)
 
-- [ ] **Step 5: Nada a commitar se tudo passou**
+- [x] **Step 5: Nada a commitar se tudo passou**
 
 Se o checklist completou sem ajustes, esta task é só verificação.
 
