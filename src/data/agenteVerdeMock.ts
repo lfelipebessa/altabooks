@@ -8,9 +8,9 @@ const exampleBookInfo: BookInfo = {
   idioma: 'Português (BR)',
   paginas: 248,
   sinopse: 'Você é o que faz repetidamente. Em "Pequenos Hábitos, Grandes Resultados", Lucas Mendes desmonta o mito da força de vontade e mostra que mudanças duradouras nascem de sistemas, não de motivação. Com base em pesquisas de neurociência comportamental e estudos de caso de atletas, executivos e artistas brasileiros, o autor entrega um método de 30 dias para construir rotinas que se sustentam mesmo nos dias difíceis. Um livro sobre disciplina sem rigidez — e sobre como dar à própria vida a direção que ela merece.',
-  bisac_principal: { codigo: 'SEL027000', descricao: 'SELF-HELP / Personal Growth / Success' },
+  bisac_principal: { codigo: 'SEL027000', descricao: 'AUTOAJUDA / Desenvolvimento Pessoal / Sucesso' },
   bisac_secundarios: [
-    { codigo: 'SEL031000', descricao: 'SELF-HELP / Personal Growth / General' },
+    { codigo: 'SEL031000', descricao: 'AUTOAJUDA / Desenvolvimento Pessoal / Geral' },
   ],
   palavras_chave: ['hábitos', 'desenvolvimento pessoal', 'disciplina', 'produtividade', 'rotina', 'neurociência', 'comportamento', 'autoajuda'],
   isbn_fisico: '978-85-508-2410-7',
