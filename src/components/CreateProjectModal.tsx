@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { X, Loader2, ChevronDown } from 'lucide-react';
 import type { ProjetoTipo } from '../types';
+import { IDIOMAS_TRADUCAO } from '../lib/idiomas';
+import { detectDriveUrl } from '../lib/driveUrl';
 
 interface CreateProjectModalProps {
     isOpen: boolean;
@@ -31,6 +33,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
     const [subcapitulosMax, setSubcapitulosMax] = useState('8');
     const [paginasMin, setPaginasMin] = useState('180');
     const [paginasMax, setPaginasMax] = useState('205');
+    const [idioma, setIdioma] = useState<string>('EN-US');
 
     if (!isOpen) return null;
 
@@ -45,6 +48,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
         setAutoStart(true); setShowConfig(false);
         setQtdCapitulos('12'); setSubcapitulosMin('6'); setSubcapitulosMax('8');
         setPaginasMin('180'); setPaginasMax('205');
+        setIdioma('EN-US');
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -67,6 +71,14 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
             if (pagMax < pagMin) { setError('Páginas máximo deve ser maior ou igual ao mínimo.'); return; }
         }
 
+        if (tipo === 'traducao_arquivo') {
+            const match = detectDriveUrl(driveLink);
+            if (!match) {
+                setError('Use um link de arquivo (/file/d/) ou pasta (/drive/folders/) do Google Drive.');
+                return;
+            }
+        }
+
         if (!isFormValid) return;
         setLoading(true);
 
@@ -77,7 +89,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
                     ? { ...base, driveLink, autoStart, qtdCapitulos: cap, qtdSubcapitulosMin: subMin, qtdSubcapitulosMax: subMax, paginasMin: pagMin, paginasMax: pagMax }
                     : tipo === 'do_executivo'
                     ? { ...base, driveExecutivoLink, tipo: 'do_executivo', qtdCapitulos: cap, qtdSubcapitulosMin: subMin, qtdSubcapitulosMax: subMax, paginasMin: pagMin, paginasMax: pagMax }
-                    : { ...base, driveLink, tipo: 'traducao_arquivo', idioma: 'en' };
+                    : { ...base, driveLink, tipo: 'traducao_arquivo', idioma };
 
             const response = await fetch(WEBHOOK_URL, {
                 method: 'POST',
@@ -169,7 +181,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
                         ) : (
                             <div>
                                 <label className="block text-sm font-medium text-brand-text-main mb-1">
-                                    {tipo === 'traducao_arquivo' ? 'Link do arquivo no Drive (PDF ou Word) *' : 'Link do Google Drive *'}
+                                    {tipo === 'traducao_arquivo' ? 'Link do arquivo ou pasta no Drive *' : 'Link do Google Drive *'}
                                 </label>
                                 <input
                                     type="url" required disabled={loading}
@@ -177,6 +189,27 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
                                     placeholder="https://drive.google.com/..."
                                     value={driveLink} onChange={(e) => setDriveLink(e.target.value)}
                                 />
+                                {tipo === 'traducao_arquivo' && detectDriveUrl(driveLink)?.kind === 'folder' && (
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Pasta detectada — todos os PDFs e Word dentro serão traduzidos.
+                                    </p>
+                                )}
+                            </div>
+                        )}
+
+                        {tipo === 'traducao_arquivo' && (
+                            <div>
+                                <label className="block text-sm font-medium text-brand-text-main mb-1">Idioma da tradução *</label>
+                                <select
+                                    value={idioma}
+                                    onChange={(e) => setIdioma(e.target.value)}
+                                    disabled={loading}
+                                    className="w-full px-4 py-2 bg-brand-bg border border-brand-bg-card rounded-lg focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors text-brand-text-main"
+                                >
+                                    {IDIOMAS_TRADUCAO.map(({ code, label }) => (
+                                        <option key={code} value={code}>{label}</option>
+                                    ))}
+                                </select>
                             </div>
                         )}
 
