@@ -7,6 +7,7 @@ import { useArquivos } from '../hooks/useArquivos';
 import { useSumarios } from '../hooks/useSumarios';
 import { useCapitulos } from '../hooks/useCapitulos';
 import { useTraducoes } from '../hooks/useTraducoes';
+import { useTraducaoArquivoItens } from '../hooks/useTraducaoArquivoItens';
 import { TraducaoCard } from '../components/TraducaoCard';
 import { StatusBadge } from '../components/StatusBadge';
 import { ArquivoCard } from '../components/ArquivoCard';
@@ -291,6 +292,7 @@ export const DetalheProjeto: React.FC = () => {
   const { sumarios, loading: loadingSumarios, selecionarSumario, atualizarSumario } = useSumarios(id);
   const { capitulos, loading: loadingCapitulos, atualizarCapitulo } = useCapitulos(id);
   const { traducoes } = useTraducoes(id);
+  const { itens: traducaoArquivoItens, loading: loadingItensTraducao } = useTraducaoArquivoItens(id);
   const [showTraduzirModal, setShowTraduzirModal] = useState(false);
 
   const [showConfiguracoes, setShowConfiguracoes] = useState(false);
@@ -428,8 +430,63 @@ export const DetalheProjeto: React.FC = () => {
           })}
         </div>
 
-        {/* Tab: Materiais */}
-        {activeTab === 'materiais' && (
+        {/* Tab: Materiais — projeto tipo traducao_arquivo (1 row por arquivo da pasta/único) */}
+        {activeTab === 'materiais' && projeto.tipo === 'traducao_arquivo' && (
+          <section className="space-y-4">
+            <div className="bg-brand-bg rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100">
+                <h2 className="font-serif text-xl font-bold text-brand-text-main">Arquivos traduzidos</h2>
+                <p className="text-xs text-gray-500 mt-1">
+                  Cada PDF ou Word vira um Google Doc traduzido. Quando a entrada é uma pasta, todos os arquivos dentro são processados.
+                </p>
+              </div>
+              {loadingItensTraducao ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                </div>
+              ) : traducaoArquivoItens.length === 0 ? (
+                <div className="text-center py-8 text-gray-400 text-sm">
+                  Nenhum arquivo processado ainda.
+                </div>
+              ) : (
+                <ul className="divide-y divide-gray-100">
+                  {traducaoArquivoItens.map(item => (
+                    <li key={item.id} className="flex items-center gap-4 px-6 py-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-brand-text-main truncate">{item.nome_arquivo}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {item.tipo_arquivo.toUpperCase()} · {item.idioma}
+                          {item.status === 'erro' && item.mensagem_erro && (
+                            <span className="text-red-600 ml-2">— {item.mensagem_erro}</span>
+                          )}
+                        </p>
+                      </div>
+                      <StatusBadge status={
+                        item.status === 'concluido' ? 'concluido'
+                          : item.status === 'erro' ? 'erro'
+                          : 'traduzindo'
+                      } />
+                      {item.status === 'concluido' && item.drive_url_traduzido && (
+                        <a
+                          href={item.drive_url_traduzido}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-sm font-medium text-brand-text-main bg-brand-primary hover:bg-brand-hover px-3 py-1.5 rounded-lg transition-colors shrink-0"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          Abrir
+                        </a>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* Tab: Materiais — projetos livro / do_executivo */}
+        {activeTab === 'materiais' && projeto.tipo !== 'traducao_arquivo' && (
           <section className="space-y-4">
             {projeto.auto_start === false && projeto.status === 'aguardando' && (
               <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
