@@ -73,3 +73,17 @@ export interface CapituloTraducao {
   conteudo: string
   created_at: string
 }
+
+export interface TraducaoArquivoItem {
+  id: string
+  projeto_id: string
+  drive_file_id: string
+  nome_arquivo: string
+  tipo_arquivo: 'pdf' | 'docx'
+  idioma: string
+  drive_url_traduzido: string | null
+  status: 'pendente' | 'traduzindo' | 'concluido' | 'erro'
+  mensagem_erro: string | null
+  created_at: string
+  updated_at: string | null
+}
