@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import type { TraducaoArquivoItem } from '../types'
 
@@ -37,5 +37,28 @@ export function useTraducaoArquivoItens(projetoId: string | undefined) {
     return () => { supabase.removeChannel(channel) }
   }, [projetoId])
 
-  return { itens, loading }
+  const atualizarItem = useCallback(async (itemId: string, conteudoHtml: string) => {
+    // Captura o conteúdo anterior pra poder reverter se o UPDATE falhar.
+    let conteudoAnterior: string | null = null
+    setItens(prev => {
+      const found = prev.find(i => i.id === itemId)
+      conteudoAnterior = found?.conteudo_traduzido ?? null
+      return prev.map(i =>
+        i.id === itemId ? { ...i, conteudo_traduzido: conteudoHtml } : i
+      )
+    })
+    const { error } = await supabase
+      .from('traducoes_arquivo_itens')
+      .update({ conteudo_traduzido: conteudoHtml })
+      .eq('id', itemId)
+    if (error) {
+      // Reverte o optimistic update pra refletir o estado real do DB.
+      setItens(prev => prev.map(i =>
+        i.id === itemId ? { ...i, conteudo_traduzido: conteudoAnterior } : i
+      ))
+      throw error
+    }
+  }, [])
+
+  return { itens, loading, atualizarItem }
 }

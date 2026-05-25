@@ -1,4 +1,4 @@
-import type { Projeto, Sumario, SumarioAbordagem, CapituloLivro, Traducao, CapituloTraducao } from '../types'
+import type { Projeto, Sumario, SumarioAbordagem, CapituloLivro, Traducao, CapituloTraducao, TraducaoArquivoItem } from '../types'
 import { labelIdioma } from './idiomas'
 
 export function buildExecutivoHtml(projeto: Projeto): string {
@@ -76,4 +76,15 @@ ${toHtml(cap.conteudo)}`)
   return `<h1 style="text-align:center">${escapeHtml(projeto.nome_projeto)}</h1>
 <p style="text-align:center"><em>por ${escapeHtml(projeto.autor_nome)} — Tradução: ${escapeHtml(labelIdioma(traducao.idioma))}</em></p>
 ${capsHtml}`
+}
+
+export function buildTraducaoArquivoItemHtml(
+  projeto: Projeto,
+  item: TraducaoArquivoItem,
+): string {
+  const conteudo = item.conteudo_traduzido ?? ''
+  return `<h1 style="text-align:center">${escapeHtml(projeto.nome_projeto)}</h1>
+<p style="text-align:center"><em>por ${escapeHtml(projeto.autor_nome)} — Tradução: ${escapeHtml(labelIdioma(item.idioma))}</em></p>
+<h2>${escapeHtml(item.nome_arquivo)}</h2>
+${toHtml(conteudo)}`
 }
