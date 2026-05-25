@@ -77,7 +77,8 @@ export interface CapituloTraducao {
 export interface TraducaoArquivoItem {
   id: string
   projeto_id: string
-  drive_file_id: string
+  drive_file_id: string | null
+  storage_path: string | null
   nome_arquivo: string
   tipo_arquivo: 'pdf' | 'docx'
   idioma: string
@@ -87,4 +88,11 @@ export interface TraducaoArquivoItem {
   mensagem_erro: string | null
   created_at: string
   updated_at: string | null
+}
+
+export interface UploadedFileMeta {
+  name: string
+  storage_path: string
+  tipo_arquivo: 'pdf' | 'docx'
+  size: number
 }

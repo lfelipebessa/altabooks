@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { X, Loader2, ChevronDown } from 'lucide-react';
+import { X, Loader2, ChevronDown, Link2, UploadCloud } from 'lucide-react';
 import type { ProjetoTipo } from '../types';
 import { IDIOMAS_TRADUCAO } from '../lib/idiomas';
 import { detectDriveUrl } from '../lib/driveUrl';
+import { useUploadTraducao } from '../hooks/useUploadTraducao';
+import { UploadDropzone } from './UploadDropzone';
 
 interface CreateProjectModalProps {
     isOpen: boolean;
@@ -17,6 +19,8 @@ const TYPE_OPTIONS: { value: ProjetoTipo; label: string; description: string }[]
     { value: 'do_executivo', label: 'Do Executivo', description: 'Gera livro a partir de um projeto executivo pronto' },
     { value: 'traducao_arquivo', label: 'Traduzir Arquivo', description: 'Traduz PDF ou Word mantendo o formato' },
 ];
+
+type TraducaoOrigem = 'drive' | 'upload';
 
 export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose, onSuccess }) => {
     const [tipo, setTipo] = useState<ProjetoTipo>('livro');
@@ -34,12 +38,18 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
     const [paginasMin, setPaginasMin] = useState('180');
     const [paginasMax, setPaginasMax] = useState('205');
     const [idioma, setIdioma] = useState<string>('EN-US');
+    const [origemTraducao, setOrigemTraducao] = useState<TraducaoOrigem>('drive');
+    const upload = useUploadTraducao();
 
     if (!isOpen) return null;
 
     const isFormValid = (() => {
         const base = name.trim() !== '' && author.trim() !== '';
         if (tipo === 'do_executivo') return base && driveExecutivoLink.trim() !== '';
+        if (tipo === 'traducao_arquivo') {
+            if (origemTraducao === 'drive') return base && driveLink.trim() !== '';
+            return base && upload.files.length > 0;
+        }
         return base && driveLink.trim() !== '';
     })();
 
@@ -49,6 +59,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
         setQtdCapitulos('12'); setSubcapitulosMin('6'); setSubcapitulosMax('8');
         setPaginasMin('180'); setPaginasMax('205');
         setIdioma('EN-US');
+        setOrigemTraducao('drive');
+        upload.reset();
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -71,7 +83,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
             if (pagMax < pagMin) { setError('Páginas máximo deve ser maior ou igual ao mínimo.'); return; }
         }
 
-        if (tipo === 'traducao_arquivo') {
+        if (tipo === 'traducao_arquivo' && origemTraducao === 'drive') {
             const match = detectDriveUrl(driveLink);
             if (!match) {
                 setError('Use um link de arquivo (/file/d/) ou pasta (/drive/folders/) do Google Drive.');
@@ -79,17 +91,31 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
             }
         }
 
+        if (tipo === 'traducao_arquivo' && origemTraducao === 'upload' && upload.files.length === 0) {
+            setError('Adicione ao menos um arquivo pra tradução.');
+            return;
+        }
+
         if (!isFormValid) return;
         setLoading(true);
 
         try {
             const base = { projectName: name, authorName: author };
+
+            // Upload primeiro (se aplicável); só dispara webhook após todos arquivos prontos
+            let uploadedFiles: { name: string; storage_path: string; tipo_arquivo: 'pdf' | 'docx'; size: number }[] | undefined;
+            if (tipo === 'traducao_arquivo' && origemTraducao === 'upload') {
+                uploadedFiles = await upload.startUpload();
+            }
+
             const payload =
                 tipo === 'livro'
                     ? { ...base, driveLink, autoStart, qtdCapitulos: cap, qtdSubcapitulosMin: subMin, qtdSubcapitulosMax: subMax, paginasMin: pagMin, paginasMax: pagMax }
                     : tipo === 'do_executivo'
                     ? { ...base, driveExecutivoLink, tipo: 'do_executivo', qtdCapitulos: cap, qtdSubcapitulosMin: subMin, qtdSubcapitulosMax: subMax, paginasMin: pagMin, paginasMax: pagMax }
-                    : { ...base, driveLink, tipo: 'traducao_arquivo', idioma };
+                    : origemTraducao === 'drive'
+                    ? { ...base, driveLink, tipo: 'traducao_arquivo', idioma }
+                    : { ...base, tipo: 'traducao_arquivo', idioma, uploadedFiles };
 
             const response = await fetch(WEBHOOK_URL, {
                 method: 'POST',
@@ -168,7 +194,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
                             />
                         </div>
 
-                        {tipo === 'do_executivo' ? (
+                        {tipo === 'do_executivo' && (
                             <div>
                                 <label className="block text-sm font-medium text-brand-text-main mb-1">Link do Google Doc (Executivo) *</label>
                                 <input
@@ -178,21 +204,70 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
                                     value={driveExecutivoLink} onChange={(e) => setDriveExecutivoLink(e.target.value)}
                                 />
                             </div>
-                        ) : (
+                        )}
+
+                        {tipo === 'livro' && (
                             <div>
-                                <label className="block text-sm font-medium text-brand-text-main mb-1">
-                                    {tipo === 'traducao_arquivo' ? 'Link do arquivo ou pasta no Drive *' : 'Link do Google Drive *'}
-                                </label>
+                                <label className="block text-sm font-medium text-brand-text-main mb-1">Link do Google Drive *</label>
                                 <input
                                     type="url" required disabled={loading}
                                     className="w-full px-4 py-2 bg-brand-bg border border-brand-bg-card rounded-lg focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors text-brand-text-main"
                                     placeholder="https://drive.google.com/..."
                                     value={driveLink} onChange={(e) => setDriveLink(e.target.value)}
                                 />
-                                {tipo === 'traducao_arquivo' && detectDriveUrl(driveLink)?.kind === 'folder' && (
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        Pasta detectada — todos os PDFs e Word dentro serão traduzidos.
-                                    </p>
+                            </div>
+                        )}
+
+                        {tipo === 'traducao_arquivo' && (
+                            <div className="space-y-3">
+                                <div className="flex gap-1 bg-brand-bg-section rounded-xl p-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setOrigemTraducao('drive')}
+                                        disabled={loading}
+                                        className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                                            origemTraducao === 'drive' ? 'bg-brand-bg text-brand-text-main shadow-sm' : 'text-gray-500 hover:text-brand-text-main'
+                                        }`}
+                                    >
+                                        <Link2 className="w-3.5 h-3.5" />
+                                        Pasta no Drive
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setOrigemTraducao('upload')}
+                                        disabled={loading}
+                                        className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                                            origemTraducao === 'upload' ? 'bg-brand-bg text-brand-text-main shadow-sm' : 'text-gray-500 hover:text-brand-text-main'
+                                        }`}
+                                    >
+                                        <UploadCloud className="w-3.5 h-3.5" />
+                                        Upload de arquivos
+                                    </button>
+                                </div>
+
+                                {origemTraducao === 'drive' ? (
+                                    <div>
+                                        <input
+                                            type="url" required disabled={loading}
+                                            className="w-full px-4 py-2 bg-brand-bg border border-brand-bg-card rounded-lg focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors text-brand-text-main"
+                                            placeholder="https://drive.google.com/..."
+                                            value={driveLink} onChange={(e) => setDriveLink(e.target.value)}
+                                        />
+                                        {detectDriveUrl(driveLink)?.kind === 'folder' && (
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                Pasta detectada — todos os PDFs e Word dentro serão traduzidos.
+                                            </p>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <UploadDropzone
+                                        files={upload.files}
+                                        onAddFiles={(fs) => upload.addFiles(fs)}
+                                        onRemoveFile={upload.removeFile}
+                                        disabled={loading}
+                                        isUploading={upload.isUploading}
+                                        error={upload.errorAcumulado}
+                                    />
                                 )}
                             </div>
                         )}
@@ -302,7 +377,9 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
                                     : 'bg-brand-primary/50 text-brand-text-main/50 cursor-not-allowed'
                             }`}>
                             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                            {loading ? 'Criando...' : 'Criar Projeto'}
+                            {loading
+                                ? (upload.isUploading ? 'Subindo arquivos...' : 'Criando...')
+                                : 'Criar Projeto'}
                         </button>
                     </div>
                 </form>
