@@ -10,6 +10,12 @@ import { BotaoSalvarSticky } from '../../components/Metadados/BotaoSalvarSticky'
 import { StatusBadgeMetadados } from '../../components/Metadados/StatusBadgeMetadados';
 import type { MetadadosJSON } from '../../types/metadados';
 
+function extrairOutroJobId(msg: string | undefined): string | null {
+  if (!msg) return null;
+  const m = msg.match(/job ([0-9a-f-]{36})/i);
+  return m?.[1] ?? null;
+}
+
 export function MetadadosDetalhe() {
   const { id } = useParams<{ id: string }>();
   const { job, loading, refetch } = useMetadadosJob(id);
@@ -59,6 +65,38 @@ export function MetadadosDetalhe() {
     await refetch();
   }, [id, refetch]);
 
+  const alertaDup = job?.alertas?.find(
+    a => a.campo === 'dados_basicos.isbn' && a.mensagem.includes('outra geração')
+  );
+  const outroJobId = extrairOutroJobId(alertaDup?.mensagem);
+
+  const apagarDuplicado = useCallback(async (outroId: string) => {
+    const paths = [
+      `${outroId}/capa.pdf`,
+      `${outroId}/miolo.pdf`,
+      `${outroId}/pcp.xlsx`,
+      `${outroId}/bookinfo.xlsx`,
+    ];
+    await supabase.storage.from('metadados').remove(paths);
+    await supabase.from('metadados_jobs').delete().eq('id', outroId);
+    if (job) {
+      const novosAlertas = (job.alertas || []).filter(
+        a => !(a.campo === 'dados_basicos.isbn' && a.mensagem.includes('outra geração'))
+      );
+      await supabase.from('metadados_jobs').update({ alertas: novosAlertas }).eq('id', job.id);
+    }
+    await refetch();
+  }, [job, refetch]);
+
+  const manterAmbos = useCallback(async () => {
+    if (!job) return;
+    const novosAlertas = (job.alertas || []).filter(
+      a => !(a.campo === 'dados_basicos.isbn' && a.mensagem.includes('outra geração'))
+    );
+    await supabase.from('metadados_jobs').update({ alertas: novosAlertas }).eq('id', job.id);
+    await refetch();
+  }, [job, refetch]);
+
   if (loading) return <div className="min-h-screen"><TopBar /><div className="pt-[96px] p-6">Carregando…</div></div>;
   if (!job) return <div className="min-h-screen"><TopBar /><div className="pt-[96px] p-6">Job não encontrado.</div></div>;
 
@@ -73,6 +111,26 @@ export function MetadadosDetalhe() {
           </div>
           <StatusBadgeMetadados status={job.status} />
         </header>
+
+        {alertaDup && outroJobId && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded p-3 space-y-2">
+            <p className="text-sm text-yellow-900">{alertaDup.mensagem}</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => apagarDuplicado(outroJobId)}
+                className="px-3 py-1.5 text-sm rounded bg-red-600 text-white"
+              >
+                Apagar versão anterior
+              </button>
+              <button
+                onClick={manterAmbos}
+                className="px-3 py-1.5 text-sm rounded border bg-white"
+              >
+                Manter ambos
+              </button>
+            </div>
+          </div>
+        )}
 
         {(job.status === 'aguardando' || job.status === 'processando') && (
           <div className="bg-white border rounded p-6 text-center space-y-3">
