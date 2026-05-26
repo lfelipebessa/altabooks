@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useUserModules } from '../lib/permissions';
 
 interface TopBarProps {
-  onNewProject: () => void;
+  onNewProject?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({ onNewProject }) => {
@@ -68,7 +68,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onNewProject }) => {
             Admin
           </Link>
         )}
-        {modules.has('ghostwriter') && (
+        {modules.has('ghostwriter') && onNewProject && (
           <button
             onClick={onNewProject}
             className="flex items-center gap-2 bg-[#F5C518] hover:bg-[#E0B400] text-[#111111] font-bold py-1.5 px-4 rounded transition-colors text-sm cursor-pointer"
