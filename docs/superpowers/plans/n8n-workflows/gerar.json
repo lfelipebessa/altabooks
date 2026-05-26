@@ -199,7 +199,7 @@
         "sendBody": true,
         "contentType": "json",
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ action: 'parse-pcp', pcp_b64: $binary.pcp.data }) }}",
+        "jsonBody": "={{ JSON.stringify({ action: 'parse-pcp', pcp_b64: $(\"Download PCP\").first().binary.pcp.data }) }}",
         "options": {}
       },
       "id": "node-edge-parse-pcp",
