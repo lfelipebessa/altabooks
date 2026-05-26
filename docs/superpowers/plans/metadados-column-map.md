@@ -10,12 +10,13 @@ Mapeia célula do template → path no JSON canônico do `metadados_json`. Lido 
 - `dados_basicos.bisac[0]`, `bisac[1]` ... — quando o array do JSON é espalhado em N colunas individuais. Se `bisac.length < N`, células sobrando ficam vazias.
 - `dados_editoriais.peso_g|TO_KG` — sufixo `|TRANSFORMACAO` indica conversão antes de gravar. Transformações suportadas:
   - `TO_KG` — divide por 1000 (gramas → kg; usado em BR4 porque a planilha pede peso em kg)
+  - `JOIN_COAUTORES` — junta `[autor, ...coautores].join('; ')` antes de gravar (usado em K4 porque o BookInfo lista todos os autores numa única célula separados por `;`)
 
 ## Campos do JSON canônico SEM correspondente no BookInfo (esperado — não vão pro xlsx)
 
 | Campo | Por quê |
 |---|---|
-| `dados_basicos.coautores` | BookInfo agrupa autores+coautores em K4 separados por `;`. O n8n pode juntar `[autor, ...coautores].join('; ')` em vez de só usar `autor` direto. **Decidir.** |
+| `dados_basicos.coautores` | BookInfo agrupa autores+coautores em K4 separados por `;`. Resolvido via `K4: dados_basicos.autor\|JOIN_COAUTORES` — o Code node junta `[autor, ...coautores].join('; ')`. |
 | `dados_basicos.idioma_original` | BookInfo só tem idioma de publicação |
 | `dados_editoriais.cdu` | BookInfo só tem CDD |
 | `textos.biografia_autor` | Não cabe no BookInfo (vai pra outras planilhas) |

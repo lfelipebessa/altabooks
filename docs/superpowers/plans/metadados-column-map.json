@@ -6,7 +6,7 @@
   "G4": "dados_editoriais.formato",
   "H4": "dados_editoriais.selo",
   "I4": "dados_basicos.edicao",
-  "K4": "dados_basicos.autor",
+  "K4": "dados_basicos.autor|JOIN_COAUTORES",
   "T4": "dados_basicos.ilustrador",
   "U4": "dados_basicos.tradutor",
   "W4": "dados_basicos.prefacio_por",
