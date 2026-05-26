@@ -184,7 +184,7 @@
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const ExcelJS = require('exceljs');\n\nconst item = $input.first();\nconst capaBin = item.binary && item.binary.capa;\nconst mioloBin = item.binary && item.binary.miolo;\nconst pcpBin = item.binary && item.binary.pcp;\n\nif (!capaBin || !mioloBin || !pcpBin) {\n  throw new Error('Falha ao reunir binaries: capa=' + !!capaBin + ' miolo=' + !!mioloBin + ' pcp=' + !!pcpBin);\n}\n\nconst pcpBuffer = Buffer.from(pcpBin.data, 'base64');\n\nconst wb = new ExcelJS.Workbook();\nawait wb.xlsx.load(pcpBuffer);\nconst sheet = wb.worksheets[0];\n\nfunction norm(s) {\n  return String(s || '').trim().toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');\n}\n\nconst CAMPOS_ESPERADOS = [\n  'titulo', 'subtitulo', 'autor', 'coautores', 'tradutor', 'prefacio por', 'ilustrador',\n  'idioma original', 'idioma de publicacao', 'edicao', 'ano de publicacao', 'isbn', 'ean',\n  'selo', 'colecao', 'formato',\n  'largura', 'altura', 'lombada', 'peso', 'numero de paginas',\n  'preco de capa', 'cdd', 'cdu',\n  'bisac', 'thema', 'categorias',\n  'publico-alvo', 'faixa etaria',\n  'sinopse', 'biografia do autor', 'palavras-chave'\n];\n\nconst found = {};\nfor (let i = 1; i <= sheet.rowCount; i++) {\n  const row = sheet.getRow(i);\n  const key = norm(row.getCell(1).value);\n  const val = row.getCell(2).value;\n  if (key) found[key] = val;\n}\n\nconst alertas_pcp = [];\nfor (const k of CAMPOS_ESPERADOS) {\n  if (!(k in found) || found[k] === null || found[k] === '') {\n    alertas_pcp.push({\n      campo: 'pcp.' + k,\n      severidade: 'aviso',\n      mensagem: 'Campo \"' + k + '\" ausente na PCP — Gemini tentará extrair de capa/miolo'\n    });\n  }\n}\n\nconst pcp_texto = Object.entries(found)\n  .map(function (entry) { return entry[0] + ': ' + entry[1]; })\n  .join('\\n');\n\nreturn [{\n  json: {\n    job_id: $('Get Job').first().json.id,\n    pcp_texto: pcp_texto,\n    alertas_pcp: alertas_pcp\n  },\n  binary: {\n    capa: capaBin,\n    miolo: mioloBin\n  }\n}];"
+        "jsCode": "const SUPABASE_URL = 'https://tddolcrzmczvoqxkajic.supabase.co';\nconst ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZG9sY3J6bWN6dm9xeGthamljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwMzgxNzgsImV4cCI6MjA3OTYxNDE3OH0.uTm3MXzGvoR1DbjChyOJbrzGmB9_TBC38V5rb3qVdsY';\n\nconst item = $input.first();\nconst capaBin = item.binary && item.binary.capa;\nconst mioloBin = item.binary && item.binary.miolo;\nconst pcpBin = item.binary && item.binary.pcp;\n\nif (!capaBin || !mioloBin || !pcpBin) {\n  throw new Error('Falha ao reunir binaries: capa=' + !!capaBin + ' miolo=' + !!mioloBin + ' pcp=' + !!pcpBin);\n}\n\nconst resp = await $helpers.httpRequest({\n  method: 'POST',\n  url: SUPABASE_URL + '/functions/v1/metadados-xlsx',\n  headers: {\n    'Authorization': 'Bearer ' + ANON_KEY,\n    'apikey': ANON_KEY,\n    'Content-Type': 'application/json',\n  },\n  body: { action: 'parse-pcp', pcp_b64: pcpBin.data },\n  json: true,\n});\n\nif (resp && resp.error) throw new Error('Edge parse-pcp falhou: ' + resp.error);\n\nreturn [{\n  json: {\n    job_id: $('Get Job').first().json.id,\n    pcp_texto: resp.pcp_texto,\n    alertas_pcp: resp.alertas_pcp,\n  },\n  binary: {\n    capa: capaBin,\n    miolo: mioloBin,\n  }\n}];"
       },
       "id": "node-parse-pcp",
       "name": "Parse PCP",
@@ -360,38 +360,8 @@
     },
     {
       "parameters": {
-        "method": "GET",
-        "url": "https://tddolcrzmczvoqxkajic.supabase.co/storage/v1/object/metadados/templates/bookinfo-template.xlsx",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "supabaseApi",
-        "options": {
-          "response": {
-            "response": {
-              "responseFormat": "file",
-              "outputPropertyName": "template"
-            }
-          }
-        }
-      },
-      "id": "node-get-template",
-      "name": "Get Template",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        3100,
-        560
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "TODO_SUPABASE_CREDENTIAL_ID",
-          "name": "Supabase service_role"
-        }
-      }
-    },
-    {
-      "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const ExcelJS = require('exceljs');\n\nconst COLUMN_MAP = {\n  \"A4\": \"dados_basicos.isbn\",\n  \"B4\": \"dados_basicos.titulo\",\n  \"C4\": \"dados_basicos.subtitulo\",\n  \"E4\": \"dados_editoriais.colecao\",\n  \"G4\": \"dados_editoriais.formato\",\n  \"H4\": \"dados_editoriais.selo\",\n  \"I4\": \"dados_basicos.edicao\",\n  \"K4\": \"dados_basicos.autor|JOIN_COAUTORES\",\n  \"T4\": \"dados_basicos.ilustrador\",\n  \"U4\": \"dados_basicos.tradutor\",\n  \"W4\": \"dados_basicos.prefacio_por\",\n  \"AN4\": \"textos.palavras_chave_seo\",\n  \"AO4\": \"dados_editoriais.categorias_alta_books\",\n  \"AP4\": \"dados_editoriais.cdd\",\n  \"AQ4\": \"dados_editoriais.bisac[0]\",\n  \"AR4\": \"dados_editoriais.bisac[1]\",\n  \"AS4\": \"dados_editoriais.bisac[2]\",\n  \"AT4\": \"dados_editoriais.bisac[3]\",\n  \"AU4\": \"dados_editoriais.bisac[4]\",\n  \"AV4\": \"dados_editoriais.bisac[5]\",\n  \"AW4\": \"dados_editoriais.bisac[6]\",\n  \"AX4\": \"dados_editoriais.bisac[7]\",\n  \"AY4\": \"dados_editoriais.bisac[8]\",\n  \"AZ4\": \"dados_editoriais.bisac[9]\",\n  \"BA4\": \"dados_editoriais.thema[0]\",\n  \"BB4\": \"dados_editoriais.thema[1]\",\n  \"BC4\": \"dados_basicos.ano_publicacao\",\n  \"BF4\": \"dados_basicos.idioma_publicacao\",\n  \"BH4\": \"dados_editoriais.faixa_etaria\",\n  \"BI4\": \"dados_editoriais.publico_alvo\",\n  \"BJ4\": \"textos.sinopse\",\n  \"BN4\": \"dados_editoriais.num_paginas\",\n  \"BO4\": \"dados_editoriais.dimensoes_cm.altura\",\n  \"BP4\": \"dados_editoriais.dimensoes_cm.largura\",\n  \"BQ4\": \"dados_editoriais.dimensoes_cm.lombada\",\n  \"BR4\": \"dados_editoriais.peso_g|TO_KG\",\n  \"CC4\": \"dados_editoriais.preco_capa_brl\",\n  \"CD4\": \"dados_basicos.ean\"\n};\n\nfunction getByPath(obj, path) {\n  const arrMatch = path.match(/^(.+)\\[(\\d+)\\]$/);\n  if (arrMatch) {\n    const arr = getByPath(obj, arrMatch[1]);\n    return Array.isArray(arr) ? arr[parseInt(arrMatch[2], 10)] : undefined;\n  }\n  return path.split('.').reduce(function (a, k) { return a == null ? undefined : a[k]; }, obj);\n}\n\nfunction applyTransform(value, transform, json) {\n  if (transform === 'TO_KG') {\n    if (value == null || value === '') return null;\n    return Number(value) / 1000;\n  }\n  if (transform === 'JOIN_COAUTORES') {\n    const autor = getByPath(json, 'dados_basicos.autor') || '';\n    const co = getByPath(json, 'dados_basicos.coautores') || [];\n    return [autor].concat(Array.isArray(co) ? co : []).filter(Boolean).join('; ');\n  }\n  return value;\n}\n\nfunction resolveCell(spec, json) {\n  const parts = spec.split('|');\n  const pathPart = parts[0];\n  const transform = parts[1];\n  let value = getByPath(json, pathPart);\n  if (transform) value = applyTransform(value, transform, json);\n  if (Array.isArray(value)) value = value.join('; ');\n  return value;\n}\n\nconst item = $input.first();\nconst ma = $('Merge Alerts').first().json;\n\nconst templateBin = item.binary && item.binary.template;\nif (!templateBin) throw new Error('Template binary não veio do Get Template');\nconst templateBuffer = Buffer.from(templateBin.data, 'base64');\n\nconst wb = new ExcelJS.Workbook();\nawait wb.xlsx.load(templateBuffer);\nconst sheet = wb.worksheets[0];\n\nfor (const cell of Object.keys(COLUMN_MAP)) {\n  const spec = COLUMN_MAP[cell];\n  const v = resolveCell(spec, ma.metadados_json);\n  if (v !== undefined && v !== null && v !== '') {\n    sheet.getCell(cell).value = v;\n  }\n}\n\nconst out = await wb.xlsx.writeBuffer();\nconst b64 = Buffer.from(out).toString('base64');\n\nreturn [{\n  json: {\n    job_id: ma.job_id,\n    metadados_json: ma.metadados_json,\n    alertas: ma.alertas,\n    isbn: ma.isbn,\n    titulo: ma.titulo,\n    autor: ma.autor,\n    selo: ma.selo,\n    xlsx_bookinfo_path: ma.job_id + '/bookinfo.xlsx'\n  },\n  binary: {\n    data: {\n      data: b64,\n      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',\n      fileName: 'bookinfo.xlsx',\n      fileExtension: 'xlsx'\n    }\n  }\n}];"
+        "jsCode": "const SUPABASE_URL = 'https://tddolcrzmczvoqxkajic.supabase.co';\nconst ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZG9sY3J6bWN6dm9xeGthamljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwMzgxNzgsImV4cCI6MjA3OTYxNDE3OH0.uTm3MXzGvoR1DbjChyOJbrzGmB9_TBC38V5rb3qVdsY';\n\nconst ma = $('Merge Alerts').first().json;\n\nconst resp = await $helpers.httpRequest({\n  method: 'POST',\n  url: SUPABASE_URL + '/functions/v1/metadados-xlsx',\n  headers: {\n    'Authorization': 'Bearer ' + ANON_KEY,\n    'apikey': ANON_KEY,\n    'Content-Type': 'application/json',\n  },\n  body: { action: 'generate-bookinfo', metadados_json: ma.metadados_json },\n  json: true,\n});\n\nif (resp && resp.error) throw new Error('Edge generate-bookinfo falhou: ' + resp.error);\n\nreturn [{\n  json: {\n    job_id: ma.job_id,\n    metadados_json: ma.metadados_json,\n    alertas: ma.alertas,\n    isbn: ma.isbn,\n    titulo: ma.titulo,\n    autor: ma.autor,\n    selo: ma.selo,\n    xlsx_bookinfo_path: ma.job_id + '/bookinfo.xlsx'\n  },\n  binary: {\n    data: {\n      data: resp.xlsx_b64,\n      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',\n      fileName: 'bookinfo.xlsx',\n      fileExtension: 'xlsx'\n    }\n  }\n}];"
       },
       "id": "node-gen-xlsx",
       "name": "Generate XLSX",
@@ -662,17 +632,6 @@
       ]
     },
     "Merge Alerts": {
-      "main": [
-        [
-          {
-            "node": "Get Template",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get Template": {
       "main": [
         [
           {

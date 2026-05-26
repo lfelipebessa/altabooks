@@ -12,7 +12,10 @@
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [240, 300],
+      "position": [
+        240,
+        300
+      ],
       "webhookId": "ghostwriter-metadados-regerar-xlsx"
     },
     {
@@ -25,7 +28,10 @@
       "name": "Get Job JSON",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [460, 300],
+      "position": [
+        460,
+        300
+      ],
       "credentials": {
         "postgres": {
           "id": "TODO_POSTGRES_CREDENTIAL_ID",
@@ -35,40 +41,17 @@
     },
     {
       "parameters": {
-        "method": "GET",
-        "url": "https://tddolcrzmczvoqxkajic.supabase.co/storage/v1/object/metadados/templates/bookinfo-template.xlsx",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "supabaseApi",
-        "options": {
-          "response": {
-            "response": {
-              "responseFormat": "file"
-            }
-          }
-        }
-      },
-      "id": "node-get-template",
-      "name": "Get Template",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [680, 300],
-      "credentials": {
-        "supabaseApi": {
-          "id": "TODO_SUPABASE_CREDENTIAL_ID",
-          "name": "Supabase service_role"
-        }
-      }
-    },
-    {
-      "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const ExcelJS = require('exceljs');\n\nconst COLUMN_MAP = {\n  \"A4\": \"dados_basicos.isbn\",\n  \"B4\": \"dados_basicos.titulo\",\n  \"C4\": \"dados_basicos.subtitulo\",\n  \"E4\": \"dados_editoriais.colecao\",\n  \"G4\": \"dados_editoriais.formato\",\n  \"H4\": \"dados_editoriais.selo\",\n  \"I4\": \"dados_basicos.edicao\",\n  \"K4\": \"dados_basicos.autor|JOIN_COAUTORES\",\n  \"T4\": \"dados_basicos.ilustrador\",\n  \"U4\": \"dados_basicos.tradutor\",\n  \"W4\": \"dados_basicos.prefacio_por\",\n  \"AN4\": \"textos.palavras_chave_seo\",\n  \"AO4\": \"dados_editoriais.categorias_alta_books\",\n  \"AP4\": \"dados_editoriais.cdd\",\n  \"AQ4\": \"dados_editoriais.bisac[0]\",\n  \"AR4\": \"dados_editoriais.bisac[1]\",\n  \"AS4\": \"dados_editoriais.bisac[2]\",\n  \"AT4\": \"dados_editoriais.bisac[3]\",\n  \"AU4\": \"dados_editoriais.bisac[4]\",\n  \"AV4\": \"dados_editoriais.bisac[5]\",\n  \"AW4\": \"dados_editoriais.bisac[6]\",\n  \"AX4\": \"dados_editoriais.bisac[7]\",\n  \"AY4\": \"dados_editoriais.bisac[8]\",\n  \"AZ4\": \"dados_editoriais.bisac[9]\",\n  \"BA4\": \"dados_editoriais.thema[0]\",\n  \"BB4\": \"dados_editoriais.thema[1]\",\n  \"BC4\": \"dados_basicos.ano_publicacao\",\n  \"BF4\": \"dados_basicos.idioma_publicacao\",\n  \"BH4\": \"dados_editoriais.faixa_etaria\",\n  \"BI4\": \"dados_editoriais.publico_alvo\",\n  \"BJ4\": \"textos.sinopse\",\n  \"BN4\": \"dados_editoriais.num_paginas\",\n  \"BO4\": \"dados_editoriais.dimensoes_cm.altura\",\n  \"BP4\": \"dados_editoriais.dimensoes_cm.largura\",\n  \"BQ4\": \"dados_editoriais.dimensoes_cm.lombada\",\n  \"BR4\": \"dados_editoriais.peso_g|TO_KG\",\n  \"CC4\": \"dados_editoriais.preco_capa_brl\",\n  \"CD4\": \"dados_basicos.ean\"\n};\n\nfunction getByPath(obj, path) {\n  const arrMatch = path.match(/^(.+)\\[(\\d+)\\]$/);\n  if (arrMatch) {\n    const base = arrMatch[1];\n    const idx = parseInt(arrMatch[2], 10);\n    const arr = getByPath(obj, base);\n    return Array.isArray(arr) ? arr[idx] : undefined;\n  }\n  return path.split('.').reduce((acc, k) => (acc == null ? undefined : acc[k]), obj);\n}\n\nfunction applyTransform(value, transform, json) {\n  if (transform === 'TO_KG') {\n    if (value == null || value === '') return null;\n    return Number(value) / 1000;\n  }\n  if (transform === 'JOIN_COAUTORES') {\n    const autor = getByPath(json, 'dados_basicos.autor') || '';\n    const co = getByPath(json, 'dados_basicos.coautores') || [];\n    return [autor, ...(Array.isArray(co) ? co : [])].filter(Boolean).join('; ');\n  }\n  return value;\n}\n\nfunction resolveCell(spec, json) {\n  const [pathPart, transform] = spec.split('|');\n  let value = getByPath(json, pathPart);\n  if (transform) value = applyTransform(value, transform, json);\n  if (Array.isArray(value)) value = value.join('; ');\n  return value;\n}\n\nconst jobRow = $('Get Job JSON').first().json;\nconst job_id = jobRow.id;\nconst metadados_json = jobRow.metadados_json;\n\nif (!metadados_json) {\n  throw new Error(`Job ${job_id} sem metadados_json — não dá pra gerar xlsx`);\n}\n\nconst templateBin = $input.first().binary.data;\nconst templateBuffer = Buffer.from(templateBin.data, 'base64');\n\nconst wb = new ExcelJS.Workbook();\nawait wb.xlsx.load(templateBuffer);\nconst sheet = wb.worksheets[0];\n\nfor (const [cell, spec] of Object.entries(COLUMN_MAP)) {\n  const v = resolveCell(spec, metadados_json);\n  if (v !== undefined && v !== null && v !== '') {\n    sheet.getCell(cell).value = v;\n  }\n}\n\nconst out = await wb.xlsx.writeBuffer();\nconst b64 = Buffer.from(out).toString('base64');\n\nreturn [{\n  json: { job_id },\n  binary: {\n    data: {\n      data: b64,\n      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',\n      fileName: 'bookinfo.xlsx',\n      fileExtension: 'xlsx'\n    }\n  }\n}];"
+        "jsCode": "const SUPABASE_URL = 'https://tddolcrzmczvoqxkajic.supabase.co';\nconst ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZG9sY3J6bWN6dm9xeGthamljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwMzgxNzgsImV4cCI6MjA3OTYxNDE3OH0.uTm3MXzGvoR1DbjChyOJbrzGmB9_TBC38V5rb3qVdsY';\n\nconst jobRow = $('Get Job JSON').first().json;\nconst job_id = jobRow.id;\nconst metadados_json = jobRow.metadados_json;\n\nif (!metadados_json) {\n  throw new Error('Job ' + job_id + ' sem metadados_json — não dá pra gerar xlsx');\n}\n\nconst resp = await $helpers.httpRequest({\n  method: 'POST',\n  url: SUPABASE_URL + '/functions/v1/metadados-xlsx',\n  headers: {\n    'Authorization': 'Bearer ' + ANON_KEY,\n    'apikey': ANON_KEY,\n    'Content-Type': 'application/json',\n  },\n  body: { action: 'generate-bookinfo', metadados_json },\n  json: true,\n});\n\nif (resp && resp.error) throw new Error('Edge generate-bookinfo falhou: ' + resp.error);\n\nreturn [{\n  json: { job_id },\n  binary: {\n    data: {\n      data: resp.xlsx_b64,\n      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',\n      fileName: 'bookinfo.xlsx',\n      fileExtension: 'xlsx'\n    }\n  }\n}];"
       },
       "id": "node-gen-xlsx",
       "name": "Generate XLSX",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [900, 300]
+      "position": [
+        900,
+        300
+      ]
     },
     {
       "parameters": {
@@ -79,8 +62,14 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "x-upsert", "value": "true" },
-            { "name": "Content-Type", "value": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }
+            {
+              "name": "x-upsert",
+              "value": "true"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            }
           ]
         },
         "sendBody": true,
@@ -92,7 +81,10 @@
       "name": "Upload XLSX",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1120, 300],
+      "position": [
+        1120,
+        300
+      ],
       "credentials": {
         "supabaseApi": {
           "id": "TODO_SUPABASE_CREDENTIAL_ID",
@@ -110,7 +102,10 @@
         "contentType": "json",
         "bodyParameters": {
           "parameters": [
-            { "name": "expiresIn", "value": "={{ 300 }}" }
+            {
+              "name": "expiresIn",
+              "value": "={{ 300 }}"
+            }
           ]
         },
         "options": {}
@@ -119,7 +114,10 @@
       "name": "Sign Download URL",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1340, 300],
+      "position": [
+        1340,
+        300
+      ],
       "credentials": {
         "supabaseApi": {
           "id": "TODO_SUPABASE_CREDENTIAL_ID",
@@ -137,7 +135,10 @@
       "name": "Touch updated_at",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [1560, 300],
+      "position": [
+        1560,
+        300
+      ],
       "credentials": {
         "postgres": {
           "id": "TODO_POSTGRES_CREDENTIAL_ID",
@@ -155,30 +156,78 @@
       "name": "Respond",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1780, 300]
+      "position": [
+        1780,
+        300
+      ]
     }
   ],
   "connections": {
     "Webhook": {
-      "main": [[{ "node": "Get Job JSON", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Get Job JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Get Job JSON": {
-      "main": [[{ "node": "Get Template", "type": "main", "index": 0 }]]
-    },
-    "Get Template": {
-      "main": [[{ "node": "Generate XLSX", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Generate XLSX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Generate XLSX": {
-      "main": [[{ "node": "Upload XLSX", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Upload XLSX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Upload XLSX": {
-      "main": [[{ "node": "Sign Download URL", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Sign Download URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Sign Download URL": {
-      "main": [[{ "node": "Touch updated_at", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Touch updated_at",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Touch updated_at": {
-      "main": [[{ "node": "Respond", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
