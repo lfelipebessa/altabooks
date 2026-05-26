@@ -12,10 +12,7 @@
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [
-        240,
-        300
-      ],
+      "position": [240, 300],
       "webhookId": "ghostwriter-metadados-regerar-xlsx"
     },
     {
@@ -28,10 +25,7 @@
       "name": "Get Job JSON",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [
-        460,
-        300
-      ],
+      "position": [460, 300],
       "credentials": {
         "postgres": {
           "id": "TODO_POSTGRES_CREDENTIAL_ID",
@@ -41,17 +35,44 @@
     },
     {
       "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "const SUPABASE_URL = 'https://tddolcrzmczvoqxkajic.supabase.co';\nconst ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZG9sY3J6bWN6dm9xeGthamljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwMzgxNzgsImV4cCI6MjA3OTYxNDE3OH0.uTm3MXzGvoR1DbjChyOJbrzGmB9_TBC38V5rb3qVdsY';\n\nconst jobRow = $('Get Job JSON').first().json;\nconst job_id = jobRow.id;\nconst metadados_json = jobRow.metadados_json;\n\nif (!metadados_json) {\n  throw new Error('Job ' + job_id + ' sem metadados_json — não dá pra gerar xlsx');\n}\n\nconst resp = await fetch(SUPABASE_URL + '/functions/v1/metadados-xlsx', {\n  method: 'POST',\n  headers: {\n    'Authorization': 'Bearer ' + ANON_KEY,\n    'apikey': ANON_KEY,\n    'Content-Type': 'application/json',\n  },\n  body: JSON.stringify({ action: 'generate-bookinfo', metadados_json }),\n});\n\nconst data = await resp.json();\nif (!resp.ok || data.error) {\n  throw new Error('Edge generate-bookinfo falhou (' + resp.status + '): ' + (data.error || resp.statusText));\n}\n\nreturn [{\n  json: { job_id },\n  binary: {\n    data: {\n      data: data.xlsx_b64,\n      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',\n      fileName: 'bookinfo.xlsx',\n      fileExtension: 'xlsx'\n    }\n  }\n}];"
+        "method": "POST",
+        "url": "https://tddolcrzmczvoqxkajic.supabase.co/functions/v1/metadados-xlsx",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ action: 'generate-bookinfo', metadados_json: $json.metadados_json }) }}",
+        "options": { "timeout": 60000 }
       },
-      "id": "node-gen-xlsx",
-      "name": "Generate XLSX",
+      "id": "node-edge-gen",
+      "name": "Edge Generate XLSX",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300],
+      "credentials": {
+        "supabaseApi": {
+          "id": "TODO_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase service_role"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const jobRow = $('Get Job JSON').first().json;\nconst edge = $input.first().json;\n\nif (!jobRow.metadados_json) throw new Error('Job ' + jobRow.id + ' sem metadados_json');\nif (edge.error) throw new Error('Edge generate-bookinfo retornou erro: ' + edge.error);\nif (!edge.xlsx_b64) throw new Error('Edge generate-bookinfo não retornou xlsx_b64');\n\nreturn [{\n  json: { job_id: jobRow.id },\n  binary: {\n    data: {\n      data: edge.xlsx_b64,\n      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',\n      fileName: 'bookinfo.xlsx',\n      fileExtension: 'xlsx'\n    }\n  }\n}];"
+      },
+      "id": "node-decode-xlsx",
+      "name": "Decode XLSX",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        900,
-        300
-      ]
+      "position": [900, 300]
     },
     {
       "parameters": {
@@ -62,14 +83,8 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "x-upsert",
-              "value": "true"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            }
+            { "name": "x-upsert", "value": "true" },
+            { "name": "Content-Type", "value": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }
           ]
         },
         "sendBody": true,
@@ -81,10 +96,7 @@
       "name": "Upload XLSX",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [
-        1120,
-        300
-      ],
+      "position": [1120, 300],
       "credentials": {
         "supabaseApi": {
           "id": "TODO_SUPABASE_CREDENTIAL_ID",
@@ -95,17 +107,14 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://tddolcrzmczvoqxkajic.supabase.co/storage/v1/object/sign/metadados/{{ $('Generate XLSX').first().json.job_id }}/bookinfo.xlsx",
+        "url": "=https://tddolcrzmczvoqxkajic.supabase.co/storage/v1/object/sign/metadados/{{ $('Decode XLSX').first().json.job_id }}/bookinfo.xlsx",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "supabaseApi",
         "sendBody": true,
         "contentType": "json",
         "bodyParameters": {
           "parameters": [
-            {
-              "name": "expiresIn",
-              "value": "={{ 300 }}"
-            }
+            { "name": "expiresIn", "value": "={{ 300 }}" }
           ]
         },
         "options": {}
@@ -114,10 +123,7 @@
       "name": "Sign Download URL",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [
-        1340,
-        300
-      ],
+      "position": [1340, 300],
       "credentials": {
         "supabaseApi": {
           "id": "TODO_SUPABASE_CREDENTIAL_ID",
@@ -128,17 +134,14 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "update public.metadados_jobs set updated_at = now() where id = '{{ $('Generate XLSX').first().json.job_id }}'::uuid;",
+        "query": "update public.metadados_jobs set updated_at = now() where id = '{{ $('Decode XLSX').first().json.job_id }}'::uuid;",
         "options": {}
       },
       "id": "node-touch-updated",
       "name": "Touch updated_at",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
-      "position": [
-        1560,
-        300
-      ],
+      "position": [1560, 300],
       "credentials": {
         "postgres": {
           "id": "TODO_POSTGRES_CREDENTIAL_ID",
@@ -149,89 +152,25 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\n  \"url\": \"https://tddolcrzmczvoqxkajic.supabase.co/storage/v1{{ $('Sign Download URL').first().json.signedURL }}\"\n}",
+        "responseBody": "={ \"url\": \"https://tddolcrzmczvoqxkajic.supabase.co/storage/v1{{ $('Sign Download URL').first().json.signedURL }}\" }",
         "options": {}
       },
       "id": "node-respond",
       "name": "Respond",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [
-        1780,
-        300
-      ]
+      "position": [1780, 300]
     }
   ],
   "connections": {
-    "Webhook": {
-      "main": [
-        [
-          {
-            "node": "Get Job JSON",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get Job JSON": {
-      "main": [
-        [
-          {
-            "node": "Generate XLSX",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Generate XLSX": {
-      "main": [
-        [
-          {
-            "node": "Upload XLSX",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Upload XLSX": {
-      "main": [
-        [
-          {
-            "node": "Sign Download URL",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Sign Download URL": {
-      "main": [
-        [
-          {
-            "node": "Touch updated_at",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Touch updated_at": {
-      "main": [
-        [
-          {
-            "node": "Respond",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    }
+    "Webhook": { "main": [[{ "node": "Get Job JSON", "type": "main", "index": 0 }]] },
+    "Get Job JSON": { "main": [[{ "node": "Edge Generate XLSX", "type": "main", "index": 0 }]] },
+    "Edge Generate XLSX": { "main": [[{ "node": "Decode XLSX", "type": "main", "index": 0 }]] },
+    "Decode XLSX": { "main": [[{ "node": "Upload XLSX", "type": "main", "index": 0 }]] },
+    "Upload XLSX": { "main": [[{ "node": "Sign Download URL", "type": "main", "index": 0 }]] },
+    "Sign Download URL": { "main": [[{ "node": "Touch updated_at", "type": "main", "index": 0 }]] },
+    "Touch updated_at": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
   },
-  "settings": {
-    "executionOrder": "v1"
-  },
+  "settings": { "executionOrder": "v1" },
   "active": false
 }
