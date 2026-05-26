@@ -28,8 +28,23 @@ export function useUploadMetadados() {
 
     const jobId = crypto.randomUUID();
     const uploaded: string[] = [];
+    let jobInserted = false;
 
     try {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+
+      const { error: insertError } = await supabase.from('metadados_jobs').insert({
+        id: jobId,
+        capa_path: `${jobId}/capa.pdf`,
+        miolo_path: `${jobId}/miolo.pdf`,
+        pcp_path: `${jobId}/pcp.xlsx`,
+        status: 'aguardando',
+        created_by: userId,
+      });
+      if (insertError) throw new Error(insertError.message);
+      jobInserted = true;
+
       const passos: Array<['capa' | 'miolo' | 'pcp', File]> = [
         ['capa', input.capa],
         ['miolo', input.miolo],
@@ -45,24 +60,14 @@ export function useUploadMetadados() {
         setProgresso(p => ({ ...p, [slot]: true }));
       }
 
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData?.user?.id;
-
-      const { error: insertError } = await supabase.from('metadados_jobs').insert({
-        id: jobId,
-        capa_path: `${jobId}/capa.pdf`,
-        miolo_path: `${jobId}/miolo.pdf`,
-        pcp_path: `${jobId}/pcp.xlsx`,
-        status: 'aguardando',
-        created_by: userId,
-      });
-      if (insertError) throw new Error(insertError.message);
-
       await dispararGeracao(jobId);
       return jobId;
     } catch (err) {
       if (uploaded.length > 0) {
         await supabase.storage.from('metadados').remove(uploaded);
+      }
+      if (jobInserted) {
+        await supabase.from('metadados_jobs').delete().eq('id', jobId);
       }
       throw err;
     } finally {

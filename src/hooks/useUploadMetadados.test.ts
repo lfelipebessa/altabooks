@@ -2,17 +2,22 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useUploadMetadados } from './useUploadMetadados';
 
-const { uploadMock, removeMock, insertMock, dispararMock } = vi.hoisted(() => ({
-  uploadMock: vi.fn(),
-  removeMock: vi.fn(),
-  insertMock: vi.fn(),
-  dispararMock: vi.fn(),
-}));
+const { uploadMock, removeMock, insertMock, deleteEqMock, deleteMock, dispararMock } = vi.hoisted(() => {
+  const deleteEq = vi.fn().mockResolvedValue({ error: null });
+  return {
+    uploadMock: vi.fn(),
+    removeMock: vi.fn().mockResolvedValue({ data: null, error: null }),
+    insertMock: vi.fn(),
+    deleteEqMock: deleteEq,
+    deleteMock: vi.fn(() => ({ eq: deleteEq })),
+    dispararMock: vi.fn(),
+  };
+});
 
 vi.mock('../lib/supabase', () => ({
   supabase: {
     storage: { from: () => ({ upload: uploadMock, remove: removeMock }) },
-    from: () => ({ insert: insertMock }),
+    from: () => ({ insert: insertMock, delete: deleteMock }),
     auth: { getUser: () => Promise.resolve({ data: { user: { id: 'user-1' } } }) },
   },
 }));
@@ -29,14 +34,14 @@ function file(name: string, size: number, type: string): File {
 describe('useUploadMetadados', () => {
   beforeEach(() => {
     uploadMock.mockReset();
-    removeMock.mockReset();
-    insertMock.mockReset();
-    dispararMock.mockReset();
-    insertMock.mockReturnValue(Promise.resolve({ error: null }));
-    dispararMock.mockResolvedValue(undefined);
+    removeMock.mockReset().mockResolvedValue({ data: null, error: null });
+    insertMock.mockReset().mockReturnValue(Promise.resolve({ error: null }));
+    deleteEqMock.mockReset().mockResolvedValue({ error: null });
+    deleteMock.mockClear();
+    dispararMock.mockReset().mockResolvedValue(undefined);
   });
 
-  it('sucesso: sobe 3 arquivos, INSERT job, dispara webhook, retorna jobId', async () => {
+  it('sucesso: INSERT job, sobe 3 arquivos, dispara webhook, retorna jobId', async () => {
     uploadMock.mockResolvedValue({ data: {}, error: null });
 
     const { result } = renderHook(() => useUploadMetadados());
@@ -51,7 +56,6 @@ describe('useUploadMetadados', () => {
     });
 
     expect(jobId).toMatch(/^[0-9a-f-]{36}$/);
-    expect(uploadMock).toHaveBeenCalledTimes(3);
     expect(insertMock).toHaveBeenCalledWith(
       expect.objectContaining({
         id: jobId,
@@ -62,10 +66,12 @@ describe('useUploadMetadados', () => {
         created_by: 'user-1',
       })
     );
+    expect(uploadMock).toHaveBeenCalledTimes(3);
     expect(dispararMock).toHaveBeenCalledWith(jobId);
+    expect(deleteMock).not.toHaveBeenCalled();
   });
 
-  it('falha no 3º upload: remove os 2 anteriores e lança', async () => {
+  it('falha no 3º upload: remove arquivos já enviados, deleta job, lança', async () => {
     uploadMock
       .mockResolvedValueOnce({ data: {}, error: null })
       .mockResolvedValueOnce({ data: {}, error: null })
@@ -81,15 +87,17 @@ describe('useUploadMetadados', () => {
       })).rejects.toThrow(/boom/);
     });
 
+    expect(insertMock).toHaveBeenCalled();
     expect(removeMock).toHaveBeenCalledWith(expect.arrayContaining([
       expect.stringMatching(/\/capa\.pdf$/),
       expect.stringMatching(/\/miolo\.pdf$/),
     ]));
-    expect(insertMock).not.toHaveBeenCalled();
+    expect(deleteMock).toHaveBeenCalled();
+    expect(deleteEqMock).toHaveBeenCalledWith('id', expect.stringMatching(/^[0-9a-f-]{36}$/));
     expect(dispararMock).not.toHaveBeenCalled();
   });
 
-  it('valida tamanho: rejeita capa > 30MB sem chamar upload', async () => {
+  it('valida tamanho: rejeita capa > 30MB sem tocar no banco', async () => {
     const { result } = renderHook(() => useUploadMetadados());
 
     await act(async () => {
@@ -100,6 +108,8 @@ describe('useUploadMetadados', () => {
       })).rejects.toThrow(/Capa.*30/);
     });
 
+    expect(insertMock).not.toHaveBeenCalled();
     expect(uploadMock).not.toHaveBeenCalled();
+    expect(deleteMock).not.toHaveBeenCalled();
   });
 });
