@@ -124,12 +124,46 @@ Unique index parcial: `(projeto_id) WHERE selecionado = true` — garante no ban
 | transcricoes_resumos    | idx_transcricoes_resumos_arquivo_id   | btree        |
 | sumarios                | idx_sumarios_projeto_id               | btree        |
 | sumarios                | sumarios_projeto_id_idx               | btree unique partial (WHERE selecionado = true) |
+| metadados_jobs          | idx_metadados_jobs_status             | btree        |
+| metadados_jobs          | idx_metadados_jobs_isbn               | btree        |
+| metadados_jobs          | idx_metadados_jobs_created_by         | btree        |
 
 ### Triggers
-| Tabela    | Trigger                      | Evento         | Funcao          |
-| --------- | ---------------------------- | -------------- | --------------- |
-| projetos  | trg_projetos_updated_at      | BEFORE UPDATE  | set_updated_at() |
-| sumarios  | trg_sumarios_updated_at      | BEFORE UPDATE  | set_updated_at() |
+| Tabela          | Trigger                          | Evento         | Funcao          |
+| --------------- | -------------------------------- | -------------- | --------------- |
+| projetos        | trg_projetos_updated_at          | BEFORE UPDATE  | set_updated_at() |
+| sumarios        | trg_sumarios_updated_at          | BEFORE UPDATE  | set_updated_at() |
+| metadados_jobs  | trg_metadados_jobs_updated_at    | BEFORE UPDATE  | set_updated_at() |
+
+### Storage buckets
+| Bucket            | Público | Layout                                              |
+| ----------------- | ------- | --------------------------------------------------- |
+| traducao-uploads  | sim     | (legacy — uploads de tradução de arquivo)           |
+| metadados         | não     | `{job_id}/{capa,miolo}.pdf`, `{job_id}/pcp.xlsx`, `{job_id}/bookinfo.xlsx`, `templates/bookinfo-template.xlsx` |
+
+#### `metadados_jobs` (feature Gerador de Metadados — MVP 2026-05-26)
+| Coluna              | Tipo          | Default             | Constraint |
+| ------------------- | ------------- | ------------------- | ---------- |
+| id                  | uuid (PK)     | gen_random_uuid()   |            |
+| isbn                | varchar(20)   |                     | nullable — denormalizado (preenchido pelo n8n) |
+| titulo              | varchar(500)  |                     | nullable — denormalizado |
+| autor               | varchar(255)  |                     | nullable — denormalizado |
+| selo                | varchar(100)  |                     | nullable — denormalizado |
+| status              | varchar(50)   | 'aguardando'        | NOT NULL, CHECK: aguardando, processando, pronto, erro |
+| erro_mensagem       | text          |                     | nullable |
+| capa_path           | text          |                     | NOT NULL — path no bucket metadados |
+| miolo_path          | text          |                     | NOT NULL |
+| pcp_path            | text          |                     | NOT NULL |
+| metadados_json      | jsonb         |                     | nullable — fonte da verdade (4 blocos: dados_basicos, dados_editoriais, textos, relacionadas) |
+| alertas             | jsonb         | '[]'                | NOT NULL — array de { campo, severidade: info\|aviso\|erro, mensagem } |
+| xlsx_bookinfo_path  | text          |                     | nullable |
+| created_by          | uuid (FK)     |                     | -> auth.users.id ON DELETE SET NULL |
+| created_at          | timestamptz   | now()               | NOT NULL |
+| updated_at          | timestamptz   | now()               | NOT NULL — trigger BEFORE UPDATE |
+
+RLS habilitado: 4 policies owner-or-admin usando `public.is_admin()` SECURITY DEFINER sem argumentos.
+
+Função auxiliar: `public.check_isbn_existente(p_isbn text, p_job_id uuid)` — SECURITY DEFINER, retorna jobs com mesmo ISBN. Usada pelo n8n para alerta de duplicidade.
 
 ### Tabelas nao-relacionadas (ignorar)
 `request`, `memory`, `documents`, `n8n_chat_histories` — pertencem a outros fluxos/projetos.
@@ -153,10 +187,15 @@ Unique index parcial: `(projeto_id) WHERE selecionado = true` — garante no ban
 
 ## Webhook n8n
 
-- **URL producao**: `https://primary-production-bd3cf.up.railway.app/webhook/ghostwriter/processar`
-- **URL teste** (usada atualmente): `https://primary-production-bd3cf.up.railway.app/webhook-test/ghostwriter/processar`
-- **Body**: `{ "projectName": "...", "authorName": "...", "driveLink": "..." }`
-- O n8n insere o projeto no Supabase via workflow — o frontend nao precisa inserir diretamente
+Base: `https://primary-production-bd3cf.up.railway.app/webhook/`
+
+| Endpoint                              | Body                                                | Função |
+| ------------------------------------- | --------------------------------------------------- | ------ |
+| `ghostwriter/processar`               | `{ projectName, authorName, driveLink }`            | Criação de projeto de livro (ghostwriter) |
+| `ghostwriter/metadados/gerar`         | `{ job_id }`                                        | Extrai metadados de capa+miolo+PCP via Gemini 2.5 Flash → grava `metadados_json` + gera xlsx BookInfo |
+| `ghostwriter/metadados/regerar-xlsx`  | `{ job_id }`                                        | Regenera xlsx BookInfo a partir do `metadados_json` atual; retorna `{ url: signed_url_5min }` |
+
+O n8n insere/atualiza linhas no Supabase via workflow — o frontend não precisa inserir diretamente.
 
 ## Proximos Passos (Etapa 4)
 
