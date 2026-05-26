@@ -1,0 +1,713 @@
+{
+  "name": "[Altabooks] Metadados — Gerar",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ghostwriter/metadados/gerar",
+        "responseMode": "onReceived",
+        "responseData": "",
+        "options": {}
+      },
+      "id": "node-webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        400
+      ],
+      "webhookId": "ghostwriter-metadados-gerar"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select id, capa_path, miolo_path, pcp_path from public.metadados_jobs where id = '{{ $json.body.job_id }}'::uuid;",
+        "options": {}
+      },
+      "id": "node-get-job",
+      "name": "Get Job",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        460,
+        400
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "TODO_POSTGRES_CREDENTIAL_ID",
+          "name": "Supabase Postgres (service_role)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "update public.metadados_jobs set status = 'processando', erro_mensagem = null where id = '{{ $json.id }}'::uuid;",
+        "options": {}
+      },
+      "id": "node-mark-processing",
+      "name": "Mark Processing",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        680,
+        400
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "TODO_POSTGRES_CREDENTIAL_ID",
+          "name": "Supabase Postgres (service_role)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://tddolcrzmczvoqxkajic.supabase.co/storage/v1/object/metadados/{{ $('Get Job').first().json.capa_path }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "capa"
+            }
+          }
+        }
+      },
+      "id": "node-download-capa",
+      "name": "Download Capa",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        240
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "TODO_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase service_role"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://tddolcrzmczvoqxkajic.supabase.co/storage/v1/object/metadados/{{ $('Get Job').first().json.miolo_path }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "miolo"
+            }
+          }
+        }
+      },
+      "id": "node-download-miolo",
+      "name": "Download Miolo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        400
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "TODO_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase service_role"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://tddolcrzmczvoqxkajic.supabase.co/storage/v1/object/metadados/{{ $('Get Job').first().json.pcp_path }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "pcp"
+            }
+          }
+        }
+      },
+      "id": "node-download-pcp",
+      "name": "Download PCP",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        560
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "TODO_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase service_role"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "node-merge-1",
+      "name": "Merge Capa+Miolo",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1120,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "node-merge-2",
+      "name": "Merge + PCP",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1340,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const ExcelJS = require('exceljs');\n\nconst item = $input.first();\nconst capaBin = item.binary && item.binary.capa;\nconst mioloBin = item.binary && item.binary.miolo;\nconst pcpBin = item.binary && item.binary.pcp;\n\nif (!capaBin || !mioloBin || !pcpBin) {\n  throw new Error('Falha ao reunir binaries: capa=' + !!capaBin + ' miolo=' + !!mioloBin + ' pcp=' + !!pcpBin);\n}\n\nconst pcpBuffer = Buffer.from(pcpBin.data, 'base64');\n\nconst wb = new ExcelJS.Workbook();\nawait wb.xlsx.load(pcpBuffer);\nconst sheet = wb.worksheets[0];\n\nfunction norm(s) {\n  return String(s || '').trim().toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');\n}\n\nconst CAMPOS_ESPERADOS = [\n  'titulo', 'subtitulo', 'autor', 'coautores', 'tradutor', 'prefacio por', 'ilustrador',\n  'idioma original', 'idioma de publicacao', 'edicao', 'ano de publicacao', 'isbn', 'ean',\n  'selo', 'colecao', 'formato',\n  'largura', 'altura', 'lombada', 'peso', 'numero de paginas',\n  'preco de capa', 'cdd', 'cdu',\n  'bisac', 'thema', 'categorias',\n  'publico-alvo', 'faixa etaria',\n  'sinopse', 'biografia do autor', 'palavras-chave'\n];\n\nconst found = {};\nfor (let i = 1; i <= sheet.rowCount; i++) {\n  const row = sheet.getRow(i);\n  const key = norm(row.getCell(1).value);\n  const val = row.getCell(2).value;\n  if (key) found[key] = val;\n}\n\nconst alertas_pcp = [];\nfor (const k of CAMPOS_ESPERADOS) {\n  if (!(k in found) || found[k] === null || found[k] === '') {\n    alertas_pcp.push({\n      campo: 'pcp.' + k,\n      severidade: 'aviso',\n      mensagem: 'Campo \"' + k + '\" ausente na PCP — Gemini tentará extrair de capa/miolo'\n    });\n  }\n}\n\nconst pcp_texto = Object.entries(found)\n  .map(function (entry) { return entry[0] + ': ' + entry[1]; })\n  .join('\\n');\n\nreturn [{\n  json: {\n    job_id: $('Get Job').first().json.id,\n    pcp_texto: pcp_texto,\n    alertas_pcp: alertas_pcp\n  },\n  binary: {\n    capa: capaBin,\n    miolo: mioloBin\n  }\n}];"
+      },
+      "id": "node-parse-pcp",
+      "name": "Parse PCP",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// PROMPT_V21 inline — substituir pelo conteúdo de docs/superpowers/plans/metadados-prompt-v2.1.txt do repo.\n// Anexar ao final a linha de FORMATO DE SAÍDA pra forçar JSON.\nconst PROMPT_V21 = \"FICHA DE METADADOS EDITORIAIS\nPrompt de Extração Automática por IA\nVersão 2.1 — Grupo Alta Books\n1. IDENTIDADE E PAPEL DO AGENTE\nVocê é um especialista em metadados editoriais com profundo conhecimento em:\n\t•\tCatalogação de livros e padrões internacionais (BISAC, THEMA, ONIX)\n\t•\tMercado editorial brasileiro e suas plataformas de distribuição\n\t•\tEstrutura de metadados para marketplaces (Amazon, Bookwire, Minha Biblioteca, Árvore de Livros, Meta, Mercado Livre)\n\t•\tNormas fiscais do setor editorial (NCM, CST, CEST, origem nacional/importada)\n\t•\tBusca e análise crítica de informações em fontes primarias e na web\nPrincípio fundamental: Tome todas as decisões de forma autônoma. Registre alertas (⚠) apenas para inconsistências que impedem o preenchimento correto. Não interrompa o fluxo para consultar humanos.\n\n2. MATERIAIS DE ENTRADA\nMateriais obrigatórios — devem ser fornecidos pelo solicitante:\n1. PDF do Miolo — arquivo completo do interior do livro (texto, CIP, sumário, capas internas)\n2. PDF da Capa Aberta — arquivo único contendo capa, lombada e contracapa; deve incluir quarta capa, orelhas (se houver) e página de créditos\n3. Tabela do PCP — planilha com: acabamento, altura, largura, lombada, peso, territorialidade por formato (físico/digital/assinatura/governo), permissões de distribuição digital e ISBNs por formato\n4. Busca Web Autônoma — para obras similares mais vendidas, o agente realizará busca diretamente na Amazon.com.br. Não é necessário enviar material adicional. Obras do mesmo autor.\nHierarquia de fontes: Para qualquer campo com informações conflitantes, prevalece a seguinte ordem: (1) Conteúdo do miolo/capa > (2) Tabela do PCP > (3) Busca web. O conteúdo da obra é sempre a fonte primária para classificação temática.\n\n3. REGRAS GLOBAIS DE PREENCHIMENTO\nOrdem: Preencha todos os campos na exata ordem apresentada.\nCampos ausentes: Quando a informação não estiver disponível em nenhuma fonte, registre: ⚠ [NOME DO CAMPO] NÃO DISPONÍVEL — verificar com o Cadastro/editor de aquisição.\nDecisões autônomas: O agente decide e preenche. Alertas (⚠) são registros de log, não bloqueios de execução.\nCaixa de texto: Evite caixa-alta total. Use inicial maiúscula em todas as palavras principais; artigos, preposições, conjunções e advérbios em minúsculo.\nExemplo de título correto: \"A Mão e a Luva\" — e não: \"Mão e a Luva, A\"\nClassificação temática: Baseia-se SEMPRE na análise do conteúdo da obra. CDD da CIP é fonte secundária.\n\n4. DADOS BÁSICOS — IMPRESSO\n#\nCampo\nInstrução de preenchimento\n1\nTítulo do livro\nTranscrever conforme capa. Aplicar regra de caixa: inicial maiúscula em palavras principais; artigos/prep./conj. em minúsculo. Não usar caixa-alta total.  Fonte: PDF da capa\n2\nSubtítulo\nTranscrever conforme capa, mesmas regras de caixa do campo 1. Se não houver, deixar em branco.  Fonte: PDF da capa\n3\nAutor(es) / Organizador(es)\nNomear conforme capa. Especificar a função (Autor, Organizador, Editor, Coordenador, Tradutor, Prefaciador). Separar mútiplos nomes por ponto-e-vírgula.  Fonte: PDF da capa\n4\nNº da Edição\nInserir como numeral (ex: 1, 2, 3). Não escrever por extenso.  Fonte: Página de créditos (CIP)\n5\nNome da Coleção\nUsar inicial maiúscula em todas as palavras. Deixar em branco se não houver coleção.  Fonte: PDF da capa / página de rosto\n6\nVolume da Coleção\nInserir como numeral. Deixar em branco se não se aplicar.  Fonte: PDF da capa\n7\nSelo\nSelecionar o selo conforme página de rosto. Usar nomenclatura padronizada (ex: Alta Life, Edições 70, Morro Branco).  Fonte: Página de rosto\n8\nAcabamento\nSelecionar exclusivamente da tabela de acabamentos padronizada do PCP. Não inferir pelo material.  Fonte: Tabela do PCP  ⚠ Alerta: Se a tabela não estiver disponível: ⚠ ACABAMENTO NÃO INFORMADO — aguardando tabela do PCP.\n9\nNúmero de páginas\nConfrontar o número de páginas do arquivo de miolo com o informado na CIP. Usar o valor confirmado.  Fonte: Arquivo de miolo + CIP  ⚠ Alerta: ⚠ Registrar se houver divergência entre as duas fontes.\n10\nTerritorialidade\nPreencher conforme tabela do PCP: formatos aprovados (físico, digital, assinatura, governo) e territórios em códigos ISO-2 separados por espaço (ex: BR US CA). Regra de exclusividade: preencher apenas territory OU exclude_territory, nunca os dois. Se ambos estiverem vazios, o livro será comercializado mundialmente.  Fonte: Tabela do PCP  ⚠ Alerta: ⚠ TERRITORIALIDADE NÃO INFORMADA — aguardando dados do PCP/Editor.\nCampos adicionais — Dados Básicos\n#\nCampo\nInstrução de preenchimento\n10A\nISBN Físico\nInserir sem pontos, traços ou espaços. Confrontar obrigatoriamente: valor na capa vs. valor na CIP.  Fonte: Capa + CIP  ⚠ Alerta: ⚠ INCONSISTÊNCIA DE ISBN: valor na capa difere do valor na CIP. Verificar com o PCP antes de prosseguir. NÃO preencher o campo.\n10B\nISBNs Complementares\nPara cada formato (eISBN, audiolivro, etc.): informar o ISBN e o status de comercialização. Se o formato ainda não tiver ISBN, registrar status: Waiting.  Fonte: Tabela do PCP + CIP  ⚠ Alerta: ⚠ INCONSISTÊNCIA DE eISBN — verificar com o PCP se o ISBN digital divergir da CIP.\n10C\nDetalhes da Edição\nPreencher apenas quando houver diferencial editorial ou gráfico declarado. Exemplos: edição ilustrada, comemorativa, ampliada e revisada, bilíngue, de luxo. Não preencher para edições padrão.  Fonte: CIP / página de créditos\n10D\nTítulo Original\nPreencher somente se a obra for tradução, conforme registrado na CIP.  Fonte: CIP\n10E\nÁreas / Categorias\nMínimo 3 categorias da lista oficial interna, em ordem decrescente de relevância (a mais representativa primeiro). A classificação é SEMPRE baseada na análise do conteúdo real da obra: miolo, título, subtítulo e sinopse. O CDD da CIP é apenas referência secundária.  Fonte: Conteúdo da obra (fonte primária) + CDD da CIP (secundário)  ⚠ Alerta: ⚠ CDD DA CIP DIVERGENTE: CDD registrado [xxx] não corresponde ao conteúdo da obra. Classificação adotada com base no conteúdo: [categoria escolhida].\n10F\nCDD\nInserir o código CDD completo conforme CIP (ex: 869.935). Não inferir.  Fonte: CIP\n10G\nAno da Edição\nConforme CIP.  Fonte: CIP\n10H\nIdioma\nInformar o idioma principal. Para obras bilíngues, indicar os dois idiomas.  Fonte: Miolo / CIP\n10I\nOrigem do Produto\nSe houver título original em outro idioma na CIP: origem estrangeira (importada). Se o idioma for português e não houver título original: origem nacional. Em dúvida, registrar alerta.  Fonte: CIP  ⚠ Alerta: ⚠ ORIGEM A CONFIRMAR — verificar com o PCP.\n10J\nClassificação Indicativa\nDeterminar pelo conteúdo da obra: Livre | Recomendado para crianças | Não recomendado para <12 | <14 | <16 | <18 anos. Deve ser coerente com o Público-Alvo (campo 11).  Fonte: Análise do conteúdo\n10K\nSumário\nPreencher apenas para livros de gastronomia, guias práticos, obras de referência, manuais técnicos e estruturas modulares. NÃO preencher para ficção, autoajuda e leitura linear. Transcrever conforme o sumário do miolo.  Fonte: Miolo\n10L\nDimensões e Peso\nPreencher conforme tabela do PCP: Altura (cm), Largura (cm), Lombada (cm), Peso (g). Usar vírgula para decimais (ex: 23,5). Não inferir pelo material.  Fonte: Tabela do PCP  ⚠ Alerta: ⚠ DIMENSÕES/PESO NÃO INFORMADOS — aguardando tabela do PCP.\n\n5. DADOS EDITORIAIS\n#\nCampo\nInstrução de preenchimento\n11\nPúblico-Alvo\nSelecionar UM dos valores: Geral | 0 a 3 | 3 a 5 | 5 a 8 | 8 a 11 | 12 a 17 anos | Acima de 18 anos. Deve ser coerente com a Classificação Indicativa (campo 10J).  Fonte: Análise do conteúdo\n12\nPalavras-chave\nMínimo 15, máximo 25 termos, separados por vírgula. Limite total: 2.000 caracteres (compatibilidade Kindle). Pensar como o comprador: incluir variações do título, problemas que o livro resolve, perfil do leitor e autores/obras do mesmo nicho.  Fonte: Sinopse, orelha e miolo\n12A\nKeywords EN (apenas Bookwire)\nVersão em inglês das palavras-chave do campo 12, separadas por vírgula. Máximo 2.000 caracteres.  Fonte: Campo 12\n13\nCódigo BISAC 1 (principal)\nHIERARQUIA OBRIGATÓRIA: o BISAC 1 deve representar o assunto central da obra. Inserir apenas o código alfanumérico (ex: BUS041000). A Bookinfo aceita até 10 códigos; as demais plataformas usam apenas os 3 primeiros — portanto os campos 1, 2 e 3 devem conter os mais relevantes. Consultar exclusivamente a tabela oficial Bookinfo.  Fonte: Tabela oficial BISAC (Bookinfo)  ⚠ Alerta: Atenção: códigos semelhantes têm descrições distintas. Verificar código + descrição antes de inserir.\n14–22\nBISAC 2 a 10\nEm ordem decrescente de relevância. Inserir apenas o código alfanumérico em cada campo.  Fonte: Tabela oficial BISAC (Bookinfo)\n23\nThema — Categoria(s)\nHIERARQUIA OBRIGATÓRIA: inserir separados por ponto-e-vírgula, do mais abrangente ao mais específico. Mínimo 1, máximo 5. Exemplo: AB; ABA; ABC. A primeira categoria deve ser a mais representativa (usada pelas plataformas que aceitam apenas 1).  Fonte: Tabela THEMA\n24\nQualificador Thema\nInserir códigos separados por ponto-e-vírgula. Máximo 5. Não preencher sem ao menos uma categoria Thema. Qualificadores mais usados: 1D (Brasil/PT-BR), 5A (conteúdo adulto), 5L (educacional).  Fonte: Tabela THEMA\n25\nClassificação Âncora\nCategoria âncora da obra. Inserir: (a) Códigos BISAC âncora — mínimo 2, no formato: código + descrição em PT. (b) Códigos THEMA âncora — mínimo 2, incluir qualificadores geográficos 1K quando aplicável (ex: 1KBB-BR). (c) Exemplo âncora: título de referência no mesmo segmento.  Fonte: Análise do conteúdo + tabelas BISAC/THEMA\n\n6. TEXTOS E CONTEÜDO EDITORIAL\n#\nCampo\nInstrução de preenchimento\n26\nSinópse\nSe fornecida pelo autor/editor de aquisição: transcrever fielmente, sem HTML. Se não fornecida: elaborar com base no conteúdo, seguindo as instruções de redação abaixo. Extensão recomendada: 150 a 400 palavras.  Fonte: Quarta capa, orelha, miolo\n27\nBiografia do Autor\nBuscar na seguinte ordem: (1) Orelha traseira da capa aberta; (2) Orelha frontal; (3) Contracapa (nota biográfica); (4) Página \"Sobre o Autor\" no miolo. Transcrever fielmente, sem HTML. Se nenhuma fonte contiver biografia, redigir em terceira pessoa com os dados disponíveis (formação, área de atuação, obras anteriores). Extensão recomendada: 80 a 200 palavras.  Fonte: Capa aberta + miolo  ⚠ Alerta: ⚠ BIOGRAFIA NÃO DISPONÍVEL NO MATERIAL — verificar com o editor de aquisição (usar somente se os dados forem insuficientes para redação mínima).\n28\nArgumento de Venda\nIdentificar e redigir 5 pontos fortes da obra, cada um conectado a uma dor, necessidade ou aspiração do leitor-alvo. Formato de cada ponto: frase direta e convincente na voz de quem recomenda, respondendo à pergunta \"por que este livro é relevante?\". Evitar repetir a sinópse ou listar tópicos do sumário. Exemplo: \"Ensina a [resultado concreto] mesmo que [obstáculo comum do leitor].\"  Fonte: Análise do conteúdo + sinópse + orelha\n29\nContracapa / Quarta Capa\nTranscrever o texto integral da quarta capa do PDF de capa aberta. Sem resumos ou parafraseações.  Fonte: PDF da capa aberta\n30\nOrelha Frontal\nTranscrever o texto integral da orelha frontal do PDF de capa aberta. Se não houver, registrar: \"Não há orelha frontal nesta edição.\"  Fonte: PDF da capa aberta\n31\nOrelha Traseira / Sobre o Autor\nTranscrever o texto integral da orelha traseira ou \"Sobre o Autor\". Mesma regra da orelha frontal.  Fonte: PDF da capa aberta\n32\nMaterial Adicional\nIndicar se há materiais complementares (ex: código de acesso a conteúdo digital, guia do professor, gabaritos, áudios etc.). Se não houver, deixar em branco.  Fonte: Miolo\n\n7. ISBNs E OBRAS RELACIONADAS\n#\nCampo\nInstrução de preenchimento\n33\nISBN da Edição Anterior\nVerificar na CIP ou página de créditos. Se houver referência a edição anterior com ISBN, registrar. Se não houver, deixar em branco.  Fonte: CIP / página de créditos\n34\nOutros Títulos do Autor no Grupo Alta Books\nConsultar o catálogo interno (Material 4). Listar no formato: Título — Selo — ISBN. Se o autor não tiver outros títulos no catálogo, registrar: \"Nenhum título anterior identificado no catálogo.\"  Fonte: Catálogo interno\n35\nObras Similares Mais Vendidas\nRealizar busca na Amazon.com.br pelo tema/gênero da obra. Priorizar 5 a 8 títulos com maior visibilidade no mercado brasileiro, do mesmo gênero e público-alvo, com bom número de avaliações e posições elevadas no ranking. Formato obrigatório: Título — Editora — ISBN (sem traços).  Fonte: Busca web autônoma (Amazon.com.br)\n\n8. INSTRUÇÕES DE REDAÇÃO — SINÓPSE E BIOGRAFIA\nPara sinópses geradas pelo agente (quando não fornecidas):\n\t•\tEscreva de forma clara, envolvente e objetiva\n\t•\tResuma os principais temas, contexto e proposta da obra sem revelar o desfl nal\n\t•\tUse linguagem fluida, sofisticada e acessível ao público-alvo identificado\n\t•\tDestaque os elementos que tornam o conteúdo relevante e atrativo\n\t•\tTransmita o tom da obra e apresente seu diferencial\n\t•\tEvite descrições técnicas excessivas, repetições e listas de informações\n\t•\tExtensão recomendada: 150 a 400 palavras\nPara biografias redigidas pelo agente (quando não disponíveis no material):\n\t•\tRedigir em terceira pessoa\n\t•\tBasear-se exclusivamente nos dados identificáveis no material (formação, área de atuação, obras anteriores)\n\t•\tNão inventar ou supor informações não presentes no material\n\t•\tExtensão recomendada: 80 a 200 palavras\n\n9. FORMATO DE SAÍDA\nOrganize a resposta na exata ordem dos campos apresentados nas seções 4 a 7.\nUse os numeradores de campo como rótulos (ex: Campo 1 — Título: ...) para facilitar a importação automática.\nRegistre alertas (⚠) imediatamente após o campo afetado, sem interromper o preenchimento dos demais campos.\nAo final, inclua uma Seção de Alertas Consolidados com todos os alertas emitidos durante o preenchimento, em ordem de campo.\n\n— FIM DO PROMPT —\\n\\nFORMATO DE SAÍDA OBRIGATÓRIO: JSON único com 4 blocos exatos: dados_basicos, dados_editoriais, textos, relacionadas. Nada além do JSON.\";\n\nconst item = $input.first();\nconst capaB64 = item.binary.capa.data;\nconst mioloB64 = item.binary.miolo.data;\nconst pcp_texto = item.json.pcp_texto;\nconst job_id = item.json.job_id;\nconst alertas_pcp = item.json.alertas_pcp;\n\nconst openrouter_payload = {\n  model: 'google/gemini-2.5-flash',\n  messages: [\n    { role: 'system', content: PROMPT_V21 },\n    {\n      role: 'user',\n      content: [\n        { type: 'image_url', image_url: { url: 'data:application/pdf;base64,' + capaB64 } },\n        { type: 'image_url', image_url: { url: 'data:application/pdf;base64,' + mioloB64 } },\n        { type: 'text', text: 'Dados da PCP (chave: valor):\\n' + pcp_texto }\n      ]\n    }\n  ],\n  response_format: { type: 'json_object' }\n};\n\nreturn [{\n  json: {\n    job_id: job_id,\n    alertas_pcp: alertas_pcp,\n    openrouter_payload: openrouter_payload\n  }\n}];"
+      },
+      "id": "node-build-payload",
+      "name": "Build Gemini Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1780,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.openrouter_payload) }}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "id": "node-openrouter",
+      "name": "Call OpenRouter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2000,
+        400
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TODO_OPENROUTER_CREDENTIAL_ID",
+          "name": "OpenRouter API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const resp = $input.first().json;\nconst job_id = $('Build Gemini Payload').first().json.job_id;\nconst alertas_pcp = $('Build Gemini Payload').first().json.alertas_pcp || [];\n\nif (!resp || resp.error || !resp.choices || !resp.choices[0]) {\n  const msg = (resp && resp.error && resp.error.message) ? resp.error.message : 'sem resposta';\n  return [{ json: { job_id: job_id, erro: true, erro_mensagem: 'OpenRouter falhou: ' + msg } }];\n}\n\nlet parsed;\ntry {\n  parsed = JSON.parse(resp.choices[0].message.content);\n} catch (e) {\n  return [{ json: { job_id: job_id, erro: true, erro_mensagem: 'Gemini retornou JSON inválido: ' + e.message } }];\n}\n\nconst blocos = ['dados_basicos', 'dados_editoriais', 'textos', 'relacionadas'];\nconst ok = blocos.every(function (b) { return parsed[b] && typeof parsed[b] === 'object'; });\nif (!ok) {\n  return [{ json: { job_id: job_id, erro: true, erro_mensagem: 'JSON do Gemini não respeita o schema (faltam blocos)' } }];\n}\n\nfunction getByPath(obj, p) {\n  return p.split('.').reduce(function (a, k) { return a == null ? undefined : a[k]; }, obj);\n}\n\nconst alertas = alertas_pcp.slice();\nconst camposCriticos = [\n  ['dados_basicos.titulo', 'aviso'],\n  ['dados_basicos.autor', 'aviso'],\n  ['dados_basicos.isbn', 'aviso'],\n  ['dados_editoriais.selo', 'aviso'],\n  ['textos.sinopse', 'aviso']\n];\nfor (const item of camposCriticos) {\n  const path = item[0];\n  const sev = item[1];\n  const v = getByPath(parsed, path);\n  if (v === null || v === undefined || v === '' || (Array.isArray(v) && v.length === 0)) {\n    alertas.push({ campo: path, severidade: sev, mensagem: 'Campo \"' + path + '\" não preenchido pelo Gemini' });\n  }\n}\n\nreturn [{\n  json: {\n    job_id: job_id,\n    erro: false,\n    metadados_json: parsed,\n    alertas: alertas,\n    isbn: parsed.dados_basicos.isbn || null,\n    titulo: parsed.dados_basicos.titulo || null,\n    autor: parsed.dados_basicos.autor || null,\n    selo: parsed.dados_editoriais.selo || null\n  }\n}];"
+      },
+      "id": "node-validate-extract",
+      "name": "Validate + Extract",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2220,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "is-erro",
+              "leftValue": "={{ $json.erro }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-if-erro",
+      "name": "Erro?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2440,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "update public.metadados_jobs\nset status = 'erro',\n    erro_mensagem = $1\nwhere id = $2::uuid;",
+        "options": {
+          "queryReplacement": "={{ $json.erro_mensagem.replace(/,/g, ' -') }},{{ $json.job_id }}"
+        }
+      },
+      "id": "node-mark-erro",
+      "name": "Mark Error",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2660,
+        240
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "TODO_POSTGRES_CREDENTIAL_ID",
+          "name": "Supabase Postgres (service_role)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select id from public.check_isbn_existente($1, $2::uuid) limit 1;",
+        "options": {
+          "queryReplacement": "={{ $json.isbn || '' }},{{ $json.job_id }}"
+        }
+      },
+      "id": "node-check-isbn",
+      "name": "Check ISBN Duplicate",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2660,
+        560
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "TODO_POSTGRES_CREDENTIAL_ID",
+          "name": "Supabase Postgres (service_role)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const ve = $('Validate + Extract').first().json;\nconst dupRows = $('Check ISBN Duplicate').all();\n\nconst alertas = (ve.alertas || []).slice();\n\nif (dupRows.length > 0 && dupRows[0].json && dupRows[0].json.id) {\n  const outroId = dupRows[0].json.id;\n  alertas.push({\n    campo: 'dados_basicos.isbn',\n    severidade: 'aviso',\n    mensagem: 'Já existe outra geração com este ISBN (job ' + outroId + '). Verifique se quer manter ambas ou apagar a anterior.'\n  });\n}\n\nreturn [{\n  json: {\n    job_id: ve.job_id,\n    metadados_json: ve.metadados_json,\n    alertas: alertas,\n    isbn: ve.isbn,\n    titulo: ve.titulo,\n    autor: ve.autor,\n    selo: ve.selo\n  }\n}];"
+      },
+      "id": "node-merge-alerts",
+      "name": "Merge Alerts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2880,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://tddolcrzmczvoqxkajic.supabase.co/storage/v1/object/metadados/templates/bookinfo-template.xlsx",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "template"
+            }
+          }
+        }
+      },
+      "id": "node-get-template",
+      "name": "Get Template",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3100,
+        560
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "TODO_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase service_role"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const ExcelJS = require('exceljs');\n\nconst COLUMN_MAP = {\n  \"A4\": \"dados_basicos.isbn\",\n  \"B4\": \"dados_basicos.titulo\",\n  \"C4\": \"dados_basicos.subtitulo\",\n  \"E4\": \"dados_editoriais.colecao\",\n  \"G4\": \"dados_editoriais.formato\",\n  \"H4\": \"dados_editoriais.selo\",\n  \"I4\": \"dados_basicos.edicao\",\n  \"K4\": \"dados_basicos.autor|JOIN_COAUTORES\",\n  \"T4\": \"dados_basicos.ilustrador\",\n  \"U4\": \"dados_basicos.tradutor\",\n  \"W4\": \"dados_basicos.prefacio_por\",\n  \"AN4\": \"textos.palavras_chave_seo\",\n  \"AO4\": \"dados_editoriais.categorias_alta_books\",\n  \"AP4\": \"dados_editoriais.cdd\",\n  \"AQ4\": \"dados_editoriais.bisac[0]\",\n  \"AR4\": \"dados_editoriais.bisac[1]\",\n  \"AS4\": \"dados_editoriais.bisac[2]\",\n  \"AT4\": \"dados_editoriais.bisac[3]\",\n  \"AU4\": \"dados_editoriais.bisac[4]\",\n  \"AV4\": \"dados_editoriais.bisac[5]\",\n  \"AW4\": \"dados_editoriais.bisac[6]\",\n  \"AX4\": \"dados_editoriais.bisac[7]\",\n  \"AY4\": \"dados_editoriais.bisac[8]\",\n  \"AZ4\": \"dados_editoriais.bisac[9]\",\n  \"BA4\": \"dados_editoriais.thema[0]\",\n  \"BB4\": \"dados_editoriais.thema[1]\",\n  \"BC4\": \"dados_basicos.ano_publicacao\",\n  \"BF4\": \"dados_basicos.idioma_publicacao\",\n  \"BH4\": \"dados_editoriais.faixa_etaria\",\n  \"BI4\": \"dados_editoriais.publico_alvo\",\n  \"BJ4\": \"textos.sinopse\",\n  \"BN4\": \"dados_editoriais.num_paginas\",\n  \"BO4\": \"dados_editoriais.dimensoes_cm.altura\",\n  \"BP4\": \"dados_editoriais.dimensoes_cm.largura\",\n  \"BQ4\": \"dados_editoriais.dimensoes_cm.lombada\",\n  \"BR4\": \"dados_editoriais.peso_g|TO_KG\",\n  \"CC4\": \"dados_editoriais.preco_capa_brl\",\n  \"CD4\": \"dados_basicos.ean\"\n};\n\nfunction getByPath(obj, path) {\n  const arrMatch = path.match(/^(.+)\\[(\\d+)\\]$/);\n  if (arrMatch) {\n    const arr = getByPath(obj, arrMatch[1]);\n    return Array.isArray(arr) ? arr[parseInt(arrMatch[2], 10)] : undefined;\n  }\n  return path.split('.').reduce(function (a, k) { return a == null ? undefined : a[k]; }, obj);\n}\n\nfunction applyTransform(value, transform, json) {\n  if (transform === 'TO_KG') {\n    if (value == null || value === '') return null;\n    return Number(value) / 1000;\n  }\n  if (transform === 'JOIN_COAUTORES') {\n    const autor = getByPath(json, 'dados_basicos.autor') || '';\n    const co = getByPath(json, 'dados_basicos.coautores') || [];\n    return [autor].concat(Array.isArray(co) ? co : []).filter(Boolean).join('; ');\n  }\n  return value;\n}\n\nfunction resolveCell(spec, json) {\n  const parts = spec.split('|');\n  const pathPart = parts[0];\n  const transform = parts[1];\n  let value = getByPath(json, pathPart);\n  if (transform) value = applyTransform(value, transform, json);\n  if (Array.isArray(value)) value = value.join('; ');\n  return value;\n}\n\nconst item = $input.first();\nconst ma = $('Merge Alerts').first().json;\n\nconst templateBin = item.binary && item.binary.template;\nif (!templateBin) throw new Error('Template binary não veio do Get Template');\nconst templateBuffer = Buffer.from(templateBin.data, 'base64');\n\nconst wb = new ExcelJS.Workbook();\nawait wb.xlsx.load(templateBuffer);\nconst sheet = wb.worksheets[0];\n\nfor (const cell of Object.keys(COLUMN_MAP)) {\n  const spec = COLUMN_MAP[cell];\n  const v = resolveCell(spec, ma.metadados_json);\n  if (v !== undefined && v !== null && v !== '') {\n    sheet.getCell(cell).value = v;\n  }\n}\n\nconst out = await wb.xlsx.writeBuffer();\nconst b64 = Buffer.from(out).toString('base64');\n\nreturn [{\n  json: {\n    job_id: ma.job_id,\n    metadados_json: ma.metadados_json,\n    alertas: ma.alertas,\n    isbn: ma.isbn,\n    titulo: ma.titulo,\n    autor: ma.autor,\n    selo: ma.selo,\n    xlsx_bookinfo_path: ma.job_id + '/bookinfo.xlsx'\n  },\n  binary: {\n    data: {\n      data: b64,\n      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',\n      fileName: 'bookinfo.xlsx',\n      fileExtension: 'xlsx'\n    }\n  }\n}];"
+      },
+      "id": "node-gen-xlsx",
+      "name": "Generate XLSX",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3320,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://tddolcrzmczvoqxkajic.supabase.co/storage/v1/object/metadados/{{ $json.xlsx_bookinfo_path }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-upsert",
+              "value": "true"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "id": "node-upload-xlsx",
+      "name": "Upload XLSX",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3540,
+        560
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "TODO_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase service_role"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "list"
+        },
+        "table": {
+          "__rl": true,
+          "value": "metadados_jobs",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Generate XLSX').first().json.job_id }}",
+            "status": "pronto",
+            "metadados_json": "={{ JSON.stringify($('Generate XLSX').first().json.metadados_json) }}",
+            "alertas": "={{ JSON.stringify($('Generate XLSX').first().json.alertas) }}",
+            "isbn": "={{ $('Generate XLSX').first().json.isbn }}",
+            "titulo": "={{ $('Generate XLSX').first().json.titulo }}",
+            "autor": "={{ $('Generate XLSX').first().json.autor }}",
+            "selo": "={{ $('Generate XLSX').first().json.selo }}",
+            "xlsx_bookinfo_path": "={{ $('Generate XLSX').first().json.xlsx_bookinfo_path }}"
+          },
+          "matchingColumns": [
+            "id"
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-mark-done",
+      "name": "Mark Done",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        3760,
+        560
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "TODO_POSTGRES_CREDENTIAL_ID",
+          "name": "Supabase Postgres (service_role)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Job": {
+      "main": [
+        [
+          {
+            "node": "Mark Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Processing": {
+      "main": [
+        [
+          {
+            "node": "Download Capa",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Download Miolo",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Download PCP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Capa": {
+      "main": [
+        [
+          {
+            "node": "Merge Capa+Miolo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Miolo": {
+      "main": [
+        [
+          {
+            "node": "Merge Capa+Miolo",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Capa+Miolo": {
+      "main": [
+        [
+          {
+            "node": "Merge + PCP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download PCP": {
+      "main": [
+        [
+          {
+            "node": "Merge + PCP",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge + PCP": {
+      "main": [
+        [
+          {
+            "node": "Parse PCP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse PCP": {
+      "main": [
+        [
+          {
+            "node": "Build Gemini Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Gemini Payload": {
+      "main": [
+        [
+          {
+            "node": "Call OpenRouter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call OpenRouter": {
+      "main": [
+        [
+          {
+            "node": "Validate + Extract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate + Extract": {
+      "main": [
+        [
+          {
+            "node": "Erro?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Erro?": {
+      "main": [
+        [
+          {
+            "node": "Mark Error",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check ISBN Duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check ISBN Duplicate": {
+      "main": [
+        [
+          {
+            "node": "Merge Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Alerts": {
+      "main": [
+        [
+          {
+            "node": "Get Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Template": {
+      "main": [
+        [
+          {
+            "node": "Generate XLSX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate XLSX": {
+      "main": [
+        [
+          {
+            "node": "Upload XLSX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload XLSX": {
+      "main": [
+        [
+          {
+            "node": "Mark Done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false
+}
