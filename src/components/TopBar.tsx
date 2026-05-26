@@ -60,6 +60,14 @@ export const TopBar: React.FC<TopBarProps> = ({ onNewProject }) => {
             Agente Verde
           </Link>
         )}
+        {modules.has('metadados') && (
+          <Link
+            to="/metadados"
+            className="flex items-center gap-2 text-white/70 hover:text-[#F5C518] transition-colors text-sm font-medium px-3 py-1.5 rounded"
+          >
+            Metadados
+          </Link>
+        )}
         {modules.has('admin') && (
           <Link
             to="/admin/permissoes"

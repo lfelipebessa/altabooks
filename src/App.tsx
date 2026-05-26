@@ -11,6 +11,8 @@ import { SemAcesso } from './pages/SemAcesso';
 import { Listagem as AgenteVerdeListagem } from './pages/AgenteVerde/Listagem';
 import { Revisao as AgenteVerdeRevisao } from './pages/AgenteVerde/Revisao';
 import { Permissoes as AdminPermissoes } from './pages/Admin/Permissoes';
+import { MetadadosListagem } from './pages/Metadados/Listagem';
+import { MetadadosDetalhe } from './pages/Metadados/Detalhe';
 
 function App() {
   return (
@@ -36,6 +38,12 @@ function App() {
           } />
           <Route path="/agente-verde/lote/:id" element={
             <ModuleRoute slug="agente_verde"><AgenteVerdeRevisao /></ModuleRoute>
+          } />
+          <Route path="/metadados" element={
+            <ModuleRoute slug="metadados"><MetadadosListagem /></ModuleRoute>
+          } />
+          <Route path="/metadados/:id" element={
+            <ModuleRoute slug="metadados"><MetadadosDetalhe /></ModuleRoute>
           } />
           <Route path="/admin/permissoes" element={
             <ModuleRoute slug="admin"><AdminPermissoes /></ModuleRoute>
