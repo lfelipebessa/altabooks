@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { ProjetoStatus, ProjetoTipo } from '../types';
-import { ArrowLeft, ExternalLink, Loader2, Settings, Check, AlertCircle, ChevronDown, ChevronUp, BookOpen, FileText, LayoutList, FolderOpen, ChevronsRight, Languages } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Loader2, Settings, Check, AlertCircle, ChevronDown, ChevronUp, BookOpen, FileText, LayoutList, FolderOpen, ChevronsRight, Languages, Wand2 } from 'lucide-react';
 import { useProjeto } from '../hooks/useProjeto';
 import { useArquivos } from '../hooks/useArquivos';
 import { useSumarios } from '../hooks/useSumarios';
 import { useCapitulos } from '../hooks/useCapitulos';
 import { useTraducoes } from '../hooks/useTraducoes';
 import { useTraducaoArquivoItens } from '../hooks/useTraducaoArquivoItens';
+import { useRevisaoTraducao } from '../hooks/useRevisaoTraducao';
+import { ConfirmRevisarTodosModal } from '../components/ConfirmRevisarTodosModal';
 import { TraducaoCard } from '../components/TraducaoCard';
 import { labelIdioma } from '../lib/idiomas';
 import { StatusBadge } from '../components/StatusBadge';
@@ -200,6 +202,31 @@ const getInitialTab = (status: ProjetoStatus, tipo: ProjetoTipo): TabId => {
 
 const TraducaoSetor: React.FC<{ traducao: import('../types').Traducao; projeto: import('../types').Projeto }> = ({ traducao, projeto }) => {
   const { capitulos, loading } = useCapitulosTraduzidos(traducao.id)
+  const { iniciarRevisao, iniciando } = useRevisaoTraducao()
+  const [modalAberto, setModalAberto] = useState(false)
+
+  const revisados = capitulos.filter(c => c.status_revisao === 'revisado').length
+  const algumRevisando = capitulos.some(c => c.status_revisao === 'revisando')
+  const podeRevisarTudo = traducao.status === 'concluido' && capitulos.length > 0 && !algumRevisando
+
+  const onRevisarCapitulo = async (capituloId: string) => {
+    if (!projeto.id) return
+    await iniciarRevisao({
+      projeto_id: projeto.id,
+      idioma: traducao.idioma,
+      escopo: 'item',
+      item_id: capituloId
+    })
+  }
+
+  const onRevisarTodos = async () => {
+    if (!projeto.id) return
+    await iniciarRevisao({
+      projeto_id: projeto.id,
+      idioma: traducao.idioma,
+      escopo: 'tudo'
+    })
+  }
 
   return (
     <div className="space-y-3">
@@ -207,13 +234,31 @@ const TraducaoSetor: React.FC<{ traducao: import('../types').Traducao; projeto: 
         <div className="flex-1">
           <TraducaoCard traducao={traducao} />
         </div>
-        {traducao.status === 'concluido' && capitulos.length > 0 && (
-          <DownloadButton
-            projetoNome={projeto.nome_projeto}
-            kind={`traducao-${traducao.idioma.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
-            getHtml={() => buildTraducaoHtml(projeto, traducao, capitulos)}
-          />
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          {capitulos.length > 0 && (
+            <p className="text-xs text-gray-500 hidden md:block">
+              {revisados} de {capitulos.length} revisado{revisados !== 1 ? 's' : ''}
+              {algumRevisando && ' · em andamento…'}
+            </p>
+          )}
+          {podeRevisarTudo && (
+            <button
+              onClick={() => setModalAberto(true)}
+              disabled={iniciando}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-primary hover:bg-brand-hover text-brand-text-main text-xs font-bold rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <Wand2 className="w-3.5 h-3.5" />
+              {revisados === capitulos.length ? 'Revisar todos novamente' : 'Revisar todos com IA'}
+            </button>
+          )}
+          {traducao.status === 'concluido' && capitulos.length > 0 && (
+            <DownloadButton
+              projetoNome={projeto.nome_projeto}
+              kind={`traducao-${traducao.idioma.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+              getHtml={() => buildTraducaoHtml(projeto, traducao, capitulos)}
+            />
+          )}
+        </div>
       </div>
       {traducao.status !== 'erro' && (
         <div className="pl-2 border-l-2 border-brand-bg-card ml-2 space-y-3">
@@ -226,10 +271,25 @@ const TraducaoSetor: React.FC<{ traducao: import('../types').Traducao; projeto: 
               <p className="text-sm text-gray-400">Nenhum capítulo traduzido ainda.</p>
             </div>
           ) : (
-            capitulos.map(cap => <CapituloTraducaoPanel key={cap.id} capitulo={cap} />)
+            capitulos.map(cap => (
+              <CapituloTraducaoPanel
+                key={cap.id}
+                capitulo={cap}
+                onRevisar={() => onRevisarCapitulo(cap.id)}
+              />
+            ))
           )}
         </div>
       )}
+
+      <ConfirmRevisarTodosModal
+        open={modalAberto}
+        totalItens={capitulos.length}
+        unidade="capítulos"
+        idiomaLabel={labelIdioma(traducao.idioma)}
+        onClose={() => setModalAberto(false)}
+        onConfirm={onRevisarTodos}
+      />
     </div>
   )
 }
@@ -298,11 +358,35 @@ const TraducaoArquivoSetor: React.FC<{
   idioma: string
   itens: import('../types').TraducaoArquivoItem[]
   projeto: import('../types').Projeto
-  onSave: (id: string, html: string) => Promise<void>
+  onSave: (id: string, html: string, versao: 'traducao' | 'revisao') => Promise<void>
 }> = ({ idioma, itens, projeto, onSave }) => {
   const label = labelIdioma(idioma)
   const status = aggregateArquivoStatus(itens)
   const concluidos = itens.filter(i => i.status === 'concluido').length
+  const revisados = itens.filter(i => i.status_revisao === 'revisado').length
+  const algumRevisando = itens.some(i => i.status_revisao === 'revisando')
+  const itensRevisaveis = itens.filter(i => i.status === 'concluido' && i.conteudo_original)
+  const podeRevisarTudo = status === 'concluido' && itensRevisaveis.length > 0 && !algumRevisando
+
+  const { iniciarRevisao, iniciando } = useRevisaoTraducao()
+  const [modalAberto, setModalAberto] = useState(false)
+
+  const onRevisarItem = async (itemId: string) => {
+    await iniciarRevisao({
+      projeto_id: projeto.id,
+      idioma,
+      escopo: 'item',
+      item_id: itemId
+    })
+  }
+
+  const onRevisarTodos = async () => {
+    await iniciarRevisao({
+      projeto_id: projeto.id,
+      idioma,
+      escopo: 'tudo'
+    })
+  }
 
   return (
     <div className="space-y-3">
@@ -314,17 +398,44 @@ const TraducaoArquivoSetor: React.FC<{
           <p className="text-sm font-medium text-brand-text-main">Tradução — {label}</p>
           <p className="text-xs text-gray-500 mt-0.5">
             {concluidos} de {itens.length} arquivo{itens.length !== 1 ? 's' : ''} concluído{concluidos !== 1 ? 's' : ''}
+            {revisados > 0 && ` · ${revisados} revisado${revisados !== 1 ? 's' : ''}`}
             {status === 'traduzindo' && ' — em andamento…'}
+            {algumRevisando && ' · revisão em andamento…'}
             {status === 'erro' && ' — falha em todos os arquivos'}
           </p>
         </div>
+        {podeRevisarTudo && (
+          <button
+            onClick={() => setModalAberto(true)}
+            disabled={iniciando}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-primary hover:bg-brand-hover text-brand-text-main text-xs font-bold rounded-lg transition-colors cursor-pointer disabled:opacity-50 shrink-0"
+          >
+            <Wand2 className="w-3.5 h-3.5" />
+            {revisados === itensRevisaveis.length ? 'Revisar todos novamente' : 'Revisar todos com IA'}
+          </button>
+        )}
       </div>
 
       <div className="pl-2 border-l-2 border-brand-bg-card ml-2 space-y-2">
         {itens.map(item => (
-          <TraducaoArquivoItemPanel key={item.id} item={item} projeto={projeto} onSave={onSave} />
+          <TraducaoArquivoItemPanel
+            key={item.id}
+            item={item}
+            projeto={projeto}
+            onSave={onSave}
+            onRevisar={() => onRevisarItem(item.id)}
+          />
         ))}
       </div>
+
+      <ConfirmRevisarTodosModal
+        open={modalAberto}
+        totalItens={itensRevisaveis.length}
+        unidade="arquivos"
+        idiomaLabel={label}
+        onClose={() => setModalAberto(false)}
+        onConfirm={onRevisarTodos}
+      />
     </div>
   )
 }
@@ -333,7 +444,7 @@ interface TraducaoArquivoTabContentProps {
   itens: import('../types').TraducaoArquivoItem[]
   projeto: import('../types').Projeto
   loading: boolean
-  onSave: (id: string, html: string) => Promise<void>
+  onSave: (id: string, html: string, versao: 'traducao' | 'revisao') => Promise<void>
 }
 
 const TraducaoArquivoTabContent: React.FC<TraducaoArquivoTabContentProps> = ({ itens, projeto, loading, onSave }) => {
