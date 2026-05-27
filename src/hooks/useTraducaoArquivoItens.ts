@@ -37,24 +37,27 @@ export function useTraducaoArquivoItens(projetoId: string | undefined) {
     return () => { supabase.removeChannel(channel) }
   }, [projetoId])
 
-  const atualizarItem = useCallback(async (itemId: string, conteudoHtml: string) => {
-    // Captura o conteúdo anterior pra poder reverter se o UPDATE falhar.
+  const atualizarItem = useCallback(async (
+    itemId: string,
+    conteudoHtml: string,
+    versao: 'traducao' | 'revisao' = 'traducao'
+  ) => {
+    const coluna = versao === 'revisao' ? 'conteudo_revisado' : 'conteudo_traduzido'
     let conteudoAnterior: string | null = null
     setItens(prev => {
       const found = prev.find(i => i.id === itemId)
-      conteudoAnterior = found?.conteudo_traduzido ?? null
+      conteudoAnterior = (found ? ((found as unknown) as Record<string, unknown>)[coluna] as string | null : null) ?? null
       return prev.map(i =>
-        i.id === itemId ? { ...i, conteudo_traduzido: conteudoHtml } : i
+        i.id === itemId ? { ...i, [coluna]: conteudoHtml } : i
       )
     })
     const { error } = await supabase
       .from('traducoes_arquivo_itens')
-      .update({ conteudo_traduzido: conteudoHtml })
+      .update({ [coluna]: conteudoHtml })
       .eq('id', itemId)
     if (error) {
-      // Reverte o optimistic update pra refletir o estado real do DB.
       setItens(prev => prev.map(i =>
-        i.id === itemId ? { ...i, conteudo_traduzido: conteudoAnterior } : i
+        i.id === itemId ? { ...i, [coluna]: conteudoAnterior } : i
       ))
       throw error
     }
