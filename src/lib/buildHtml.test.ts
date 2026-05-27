@@ -120,8 +120,8 @@ const baseTraducao: Traducao = {
 }
 
 const baseCapitulosTrad: CapituloTraducao[] = [
-  { id: 'ct2', traducao_id: 't1', numero: 2, titulo: 'Second', conteudo: '<p>HTML content</p>', created_at: '' },
-  { id: 'ct1', traducao_id: 't1', numero: 1, titulo: 'First',  conteudo: 'Plain\n\ntext',         created_at: '' },
+  { id: 'ct2', traducao_id: 't1', numero: 2, titulo: 'Second', conteudo: '<p>HTML content</p>', created_at: '', titulo_revisado: null, conteudo_revisado: null, status_revisao: 'nao_revisado', mensagem_erro_revisao: null, revisado_em: null, modelo_revisao: null },
+  { id: 'ct1', traducao_id: 't1', numero: 1, titulo: 'First',  conteudo: 'Plain\n\ntext',         created_at: '', titulo_revisado: null, conteudo_revisado: null, status_revisao: 'nao_revisado', mensagem_erro_revisao: null, revisado_em: null, modelo_revisao: null },
 ]
 
 describe('buildTraducaoHtml', () => {

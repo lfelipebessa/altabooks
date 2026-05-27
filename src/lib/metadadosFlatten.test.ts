@@ -48,7 +48,8 @@ describe('setByPath', () => {
   it('cria estrutura intermediária se faltar', () => {
     const obj = { a: {} };
     const r = setByPath(obj, 'a.b.c', 5);
-    expect(r.a.b.c).toBe(5);
+    expect((r.a as Record<string, unknown>).b).toBeDefined();
+    expect(((r.a as Record<string, unknown>).b as Record<string, unknown>).c).toBe(5);
   });
 
   it('seta array', () => {

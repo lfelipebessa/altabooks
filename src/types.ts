@@ -65,6 +65,8 @@ export interface Traducao {
   updated_at: string | null
 }
 
+export type StatusRevisao = 'nao_revisado' | 'revisando' | 'revisado' | 'erro'
+
 export interface CapituloTraducao {
   id: string
   traducao_id: string
@@ -72,6 +74,13 @@ export interface CapituloTraducao {
   titulo: string
   conteudo: string
   created_at: string
+  // Revisão por LLM (etapa 6)
+  titulo_revisado: string | null
+  conteudo_revisado: string | null
+  status_revisao: StatusRevisao
+  mensagem_erro_revisao: string | null
+  revisado_em: string | null
+  modelo_revisao: string | null
 }
 
 export interface TraducaoArquivoItem {
@@ -88,6 +97,13 @@ export interface TraducaoArquivoItem {
   mensagem_erro: string | null
   created_at: string
   updated_at: string | null
+  // Revisão por LLM (etapa 6)
+  conteudo_original: string | null
+  conteudo_revisado: string | null
+  status_revisao: StatusRevisao
+  mensagem_erro_revisao: string | null
+  revisado_em: string | null
+  modelo_revisao: string | null
 }
 
 export interface UploadedFileMeta {
