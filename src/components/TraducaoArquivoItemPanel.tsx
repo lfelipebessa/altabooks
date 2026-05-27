@@ -113,8 +113,8 @@ export const TraducaoArquivoItemPanel: React.FC<TraducaoArquivoItemPanelProps> =
     <div className="bg-brand-bg rounded-2xl border border-gray-200 shadow-sm">
       <div className="flex items-center justify-between px-6 py-4 gap-4">
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          <span className="px-2 py-0.5 rounded-md bg-brand-bg-card text-[10px] font-bold text-gray-600 shrink-0">
-            {item.tipo_arquivo.toUpperCase()}
+          <span className="w-8 h-8 rounded-full bg-[#111] text-brand-primary text-[10px] font-bold flex items-center justify-center shrink-0">
+            {item.tipo_arquivo === 'pdf' ? 'PDF' : 'DOC'}
           </span>
           <div className="min-w-0">
             <h3 className="font-semibold text-brand-text-main truncate">{item.nome_arquivo}</h3>
@@ -200,7 +200,7 @@ export const TraducaoArquivoItemPanel: React.FC<TraducaoArquivoItemPanelProps> =
                 if (expanded) handleExitEdit();
                 setExpanded(v => !v);
               }}
-              className="flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg bg-brand-primary text-brand-text-main hover:bg-brand-hover transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg bg-brand-bg-card text-gray-600 hover:bg-brand-primary hover:text-brand-text-main transition-all cursor-pointer"
             >
               {expanded
                 ? <><ChevronUp className="w-4 h-4" /> Ocultar</>

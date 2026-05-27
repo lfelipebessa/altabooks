@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { ProjetoStatus, ProjetoTipo } from '../types';
-import { ArrowLeft, ExternalLink, Loader2, Settings, Check, AlertCircle, ChevronDown, ChevronUp, BookOpen, FileText, LayoutList, FolderOpen, ChevronsRight, Languages, Wand2 } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Loader2, Settings, Check, CheckCircle2, AlertCircle, ChevronDown, ChevronUp, BookOpen, FileText, LayoutList, FolderOpen, ChevronsRight, Languages, Wand2 } from 'lucide-react';
 import { useProjeto } from '../hooks/useProjeto';
 import { useArquivos } from '../hooks/useArquivos';
 import { useSumarios } from '../hooks/useSumarios';
@@ -390,33 +390,43 @@ const TraducaoArquivoSetor: React.FC<{
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-3 px-4 py-3 bg-brand-bg-section rounded-xl border border-gray-200">
-        {status === 'traduzindo' && <Loader2 className="w-4 h-4 animate-spin text-brand-primary shrink-0" />}
-        {status === 'concluido' && <Check className="w-4 h-4 text-green-500 shrink-0" />}
-        {status === 'erro' && <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />}
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-brand-text-main">Tradução — {label}</p>
-          <p className="text-xs text-gray-500 mt-0.5">
-            {concluidos} de {itens.length} arquivo{itens.length !== 1 ? 's' : ''} concluído{concluidos !== 1 ? 's' : ''}
-            {revisados > 0 && ` · ${revisados} revisado${revisados !== 1 ? 's' : ''}`}
-            {status === 'traduzindo' && ' — em andamento…'}
-            {algumRevisando && ' · revisão em andamento…'}
-            {status === 'erro' && ' — falha em todos os arquivos'}
-          </p>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex-1">
+          <div className="flex items-center gap-3 px-4 py-3 bg-brand-bg-section rounded-xl border border-gray-200">
+            {status === 'traduzindo' && <Loader2 className="w-4 h-4 animate-spin text-brand-primary shrink-0" />}
+            {status === 'concluido' && <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />}
+            {status === 'erro' && <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-brand-text-main">Tradução — {label}</p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {status === 'traduzindo' && `${concluidos} de ${itens.length} arquivo${itens.length !== 1 ? 's' : ''} concluído${concluidos !== 1 ? 's' : ''} — em andamento…`}
+                {status === 'concluido' && (algumRevisando ? 'Concluída · revisão em andamento…' : 'Concluída')}
+                {status === 'erro' && 'Falhou em todos os arquivos'}
+              </p>
+            </div>
+          </div>
         </div>
-        {podeRevisarTudo && (
-          <button
-            onClick={() => setModalAberto(true)}
-            disabled={iniciando}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-primary hover:bg-brand-hover text-brand-text-main text-xs font-bold rounded-lg transition-colors cursor-pointer disabled:opacity-50 shrink-0"
-          >
-            <Wand2 className="w-3.5 h-3.5" />
-            {revisados === itensRevisaveis.length ? 'Revisar todos novamente' : 'Revisar todos com IA'}
-          </button>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          {itensRevisaveis.length > 0 && (
+            <p className="text-xs text-gray-500 hidden md:block">
+              {revisados} de {itensRevisaveis.length} revisado{revisados !== 1 ? 's' : ''}
+              {algumRevisando && ' · em andamento…'}
+            </p>
+          )}
+          {podeRevisarTudo && (
+            <button
+              onClick={() => setModalAberto(true)}
+              disabled={iniciando}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-primary hover:bg-brand-hover text-brand-text-main text-xs font-bold rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <Wand2 className="w-3.5 h-3.5" />
+              {revisados === itensRevisaveis.length ? 'Revisar todos novamente' : 'Revisar todos com IA'}
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="pl-2 border-l-2 border-brand-bg-card ml-2 space-y-2">
+      <div className="pl-2 border-l-2 border-brand-bg-card ml-2 space-y-3">
         {itens.map(item => (
           <TraducaoArquivoItemPanel
             key={item.id}
