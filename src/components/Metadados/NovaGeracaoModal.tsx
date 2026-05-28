@@ -28,6 +28,15 @@ export function NovaGeracaoModal({ open, onClose, onSucesso }: Props) {
 
   const podeEnviar = !!capa && !!miolo && !!pcp && !loading;
 
+  const handleClose = () => {
+    if (loading) return;
+    setCapa(null);
+    setMiolo(null);
+    setPcp(null);
+    setErro(null);
+    onClose();
+  };
+
   const submit = async () => {
     if (!capa || !miolo || !pcp) return;
     setErro(null);
@@ -42,14 +51,14 @@ export function NovaGeracaoModal({ open, onClose, onSucesso }: Props) {
   return (
     <Modal
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       title="Nova geração de metadados"
       size="lg"
       disabled={loading}
       footer={
         <>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             disabled={loading}
             className="px-5 py-2.5 rounded-lg bg-brand-bg-card text-brand-text-body font-medium hover:bg-gray-200 transition-colors disabled:opacity-50"
           >
