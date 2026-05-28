@@ -1,21 +1,30 @@
 export type TipoCampo = 'texto' | 'texto_longo' | 'numero' | 'lista_texto' | 'select';
 
+export type LarguraCampo = 'meia' | 'cheia';
+
 export interface DefinicaoCampo {
   path: string;
   label: string;
   tipo: TipoCampo;
   opcoes?: string[];
   placeholder?: string;
+  larguraCampo?: LarguraCampo;
+}
+
+export function larguraDoCampo(c: DefinicaoCampo): LarguraCampo {
+  if (c.larguraCampo) return c.larguraCampo;
+  if (c.tipo === 'texto_longo' || c.tipo === 'lista_texto') return 'cheia';
+  return 'meia';
 }
 
 export const CAMPOS_DADOS_BASICOS: DefinicaoCampo[] = [
-  { path: 'dados_basicos.titulo', label: 'Título', tipo: 'texto' },
-  { path: 'dados_basicos.subtitulo', label: 'Subtítulo', tipo: 'texto' },
-  { path: 'dados_basicos.autor', label: 'Autor', tipo: 'texto' },
+  { path: 'dados_basicos.titulo', label: 'Título', tipo: 'texto', larguraCampo: 'cheia' },
+  { path: 'dados_basicos.subtitulo', label: 'Subtítulo', tipo: 'texto', larguraCampo: 'cheia' },
+  { path: 'dados_basicos.autor', label: 'Autor', tipo: 'texto', larguraCampo: 'cheia' },
   { path: 'dados_basicos.coautores', label: 'Coautores', tipo: 'lista_texto' },
-  { path: 'dados_basicos.tradutor', label: 'Tradutor', tipo: 'texto' },
-  { path: 'dados_basicos.prefacio_por', label: 'Prefácio por', tipo: 'texto' },
-  { path: 'dados_basicos.ilustrador', label: 'Ilustrador', tipo: 'texto' },
+  { path: 'dados_basicos.tradutor', label: 'Tradutor', tipo: 'texto', larguraCampo: 'cheia' },
+  { path: 'dados_basicos.prefacio_por', label: 'Prefácio por', tipo: 'texto', larguraCampo: 'cheia' },
+  { path: 'dados_basicos.ilustrador', label: 'Ilustrador', tipo: 'texto', larguraCampo: 'cheia' },
   { path: 'dados_basicos.idioma_original', label: 'Idioma original', tipo: 'texto' },
   { path: 'dados_basicos.idioma_publicacao', label: 'Idioma de publicação', tipo: 'texto' },
   { path: 'dados_basicos.edicao', label: 'Edição', tipo: 'texto', placeholder: '1ª edição' },
@@ -25,8 +34,8 @@ export const CAMPOS_DADOS_BASICOS: DefinicaoCampo[] = [
 ];
 
 export const CAMPOS_DADOS_EDITORIAIS: DefinicaoCampo[] = [
-  { path: 'dados_editoriais.selo', label: 'Selo', tipo: 'texto' },
-  { path: 'dados_editoriais.colecao', label: 'Coleção', tipo: 'texto' },
+  { path: 'dados_editoriais.selo', label: 'Selo', tipo: 'texto', larguraCampo: 'cheia' },
+  { path: 'dados_editoriais.colecao', label: 'Coleção', tipo: 'texto', larguraCampo: 'cheia' },
   { path: 'dados_editoriais.formato', label: 'Formato', tipo: 'select', opcoes: ['brochura', 'capa_dura', 'ebook', 'audiolivro'] },
   { path: 'dados_editoriais.dimensoes_cm.largura', label: 'Largura (cm)', tipo: 'numero' },
   { path: 'dados_editoriais.dimensoes_cm.altura', label: 'Altura (cm)', tipo: 'numero' },
@@ -39,7 +48,7 @@ export const CAMPOS_DADOS_EDITORIAIS: DefinicaoCampo[] = [
   { path: 'dados_editoriais.bisac', label: 'Códigos BISAC', tipo: 'lista_texto' },
   { path: 'dados_editoriais.thema', label: 'Códigos THEMA', tipo: 'lista_texto' },
   { path: 'dados_editoriais.categorias_alta_books', label: 'Categorias Alta Books', tipo: 'lista_texto' },
-  { path: 'dados_editoriais.publico_alvo', label: 'Público-alvo', tipo: 'texto' },
+  { path: 'dados_editoriais.publico_alvo', label: 'Público-alvo', tipo: 'texto', larguraCampo: 'cheia' },
   { path: 'dados_editoriais.faixa_etaria', label: 'Faixa etária', tipo: 'texto' },
 ];
 
@@ -57,3 +66,10 @@ export const CAMPOS_RELACIONADAS: DefinicaoCampo[] = [
   { path: 'relacionadas.livros_relacionados_catalogo_alta', label: 'Livros relacionados (catálogo Alta)', tipo: 'lista_texto' },
   { path: 'relacionadas.comparaveis_mercado', label: 'Comparáveis de mercado', tipo: 'lista_texto' },
 ];
+
+export const SECOES = [
+  { id: 'dados-basicos', label: 'Dados básicos', prefixo: 'dados_basicos.', campos: CAMPOS_DADOS_BASICOS },
+  { id: 'dados-editoriais', label: 'Dados editoriais', prefixo: 'dados_editoriais.', campos: CAMPOS_DADOS_EDITORIAIS },
+  { id: 'textos', label: 'Textos', prefixo: 'textos.', campos: CAMPOS_TEXTOS },
+  { id: 'relacionadas', label: 'Relacionadas', prefixo: 'relacionadas.', campos: CAMPOS_RELACIONADAS },
+] as const;
