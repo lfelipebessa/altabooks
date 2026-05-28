@@ -1,4 +1,4 @@
-import React, { useId, useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { useDropzone, type Accept } from 'react-dropzone';
 import { UploadCloud, File as FileIcon, X, Loader2, Check, AlertCircle, AlertTriangle } from 'lucide-react';
 
@@ -82,11 +82,11 @@ export function FileDropzone<M extends Mode>(props: FileDropzoneProps<M>) {
       setRejectionMessage(null);
       if (accepted.length === 0) return;
       if (mode === 'single') {
-        onChange(accepted[0] as Value<M>);
+        onChange(accepted[0] as unknown as Value<M>);
       } else {
         const merged = [...currentFiles, ...accepted];
         const sliced = maxFiles ? merged.slice(0, maxFiles) : merged;
-        onChange(sliced as Value<M>);
+        onChange(sliced as unknown as Value<M>);
       }
     },
     onDropRejected: (rejections) => {
@@ -103,10 +103,10 @@ export function FileDropzone<M extends Mode>(props: FileDropzoneProps<M>) {
 
   const removeFile = (index: number) => {
     if (mode === 'single') {
-      onChange(null as Value<M>);
+      onChange(null as unknown as Value<M>);
     } else {
       const next = currentFiles.filter((_, i) => i !== index);
-      onChange(next as Value<M>);
+      onChange(next as unknown as Value<M>);
     }
   };
 
