@@ -61,13 +61,17 @@ export const Modal: React.FC<ModalProps> = ({
     >
       <div
         data-testid="modal-container"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
         ref={containerRef}
+        // tabIndex={-1} is required for the focus() call below to land here
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         className={`bg-brand-bg rounded-2xl shadow-xl w-full ${SIZE_CLASS[size]} overflow-hidden outline-none`}
       >
         <div className="flex justify-between items-center p-6 border-b border-gray-100">
-          <h2 className="font-serif text-2xl font-bold text-brand-text-main">{title}</h2>
+          <h2 id="modal-title" className="font-serif text-2xl font-bold text-brand-text-main">{title}</h2>
           <button
             onClick={onClose}
             disabled={disabled}
