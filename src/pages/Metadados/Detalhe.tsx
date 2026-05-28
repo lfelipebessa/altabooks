@@ -117,8 +117,8 @@ export function MetadadosDetalhe() {
   return (
     <PageLayout>
       <div className="max-w-5xl mx-auto">
-        {/* Header sticky abaixo do TopBar */}
-        <header className="sticky top-[80px] z-30 bg-white border-b border-gray-200 -mx-6 px-6 py-4 mb-4 -mt-32">
+        {/* Header normal (rola junto com a página); Tabs.List que fica sticky */}
+        <header className="mb-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h1 className="font-serif text-3xl font-bold text-brand-text-main">

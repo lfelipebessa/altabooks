@@ -50,7 +50,7 @@ export function FormMetadados({ jsonInicial, alertas, onChange }: Props) {
 
   return (
     <Tabs value={tab} onValueChange={setTab}>
-      <Tabs.List>
+      <Tabs.List className="sticky top-[80px] z-20 bg-brand-bg-section pt-2">
         {SECOES.map(secao => {
           const erros = errosPorSecao[secao.id];
           return (
