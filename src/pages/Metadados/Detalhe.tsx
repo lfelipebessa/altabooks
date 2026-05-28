@@ -118,18 +118,26 @@ export function MetadadosDetalhe() {
     <PageLayout>
       <div className="max-w-5xl mx-auto">
         {/* Header sticky abaixo do TopBar */}
-        <header className="sticky top-[80px] z-30 bg-white border-b border-gray-200 -mx-6 px-6 py-4 mb-4">
-          <div className="max-w-5xl mx-auto flex items-start justify-between gap-3">
+        <header className="sticky top-[80px] z-30 bg-white border-b border-gray-200 -mx-6 px-6 py-4 mb-4 -mt-32">
+          <div className="flex items-start justify-between gap-3">
             <div>
               <h1 className="font-serif text-3xl font-bold text-brand-text-main">
                 {job.titulo || 'Metadados em processamento'}
               </h1>
               {job.autor && <p className="text-sm text-gray-600">por {job.autor}</p>}
               {(errosPendentes > 0 || avisosPendentes > 0) && (
-                <p className="text-sm text-yellow-700 mt-1">
-                  {errosPendentes > 0 && <>{'⚠'} {errosPendentes} {errosPendentes === 1 ? 'erro' : 'erros'}</>}
-                  {errosPendentes > 0 && avisosPendentes > 0 && ' · '}
-                  {avisosPendentes > 0 && <>{avisosPendentes} {avisosPendentes === 1 ? 'aviso' : 'avisos'}</>}
+                <p className="text-sm mt-1">
+                  {errosPendentes > 0 && (
+                    <span className="text-red-700">
+                      {'⚠'} {errosPendentes} {errosPendentes === 1 ? 'erro' : 'erros'}
+                    </span>
+                  )}
+                  {errosPendentes > 0 && avisosPendentes > 0 && <span className="text-gray-400"> · </span>}
+                  {avisosPendentes > 0 && (
+                    <span className="text-yellow-700">
+                      {avisosPendentes} {avisosPendentes === 1 ? 'aviso' : 'avisos'}
+                    </span>
+                  )}
                 </p>
               )}
             </div>
