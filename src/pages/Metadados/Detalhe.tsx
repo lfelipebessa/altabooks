@@ -145,7 +145,7 @@ export function MetadadosDetalhe() {
           </div>
         </header>
 
-        <div className="space-y-4">
+        <div className="space-y-4 pb-24">
           {alertaDup && outroJobId && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 space-y-2">
               <p className="text-sm text-yellow-900">{alertaDup.mensagem}</p>
