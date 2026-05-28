@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { FileDropzone } from './FileDropzone';
 
 const PDF = { 'application/pdf': ['.pdf'] };
@@ -140,8 +140,10 @@ describe('FileDropzone — single', () => {
     const big = makeFile('grande.pdf', 1_000_000);
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     Object.defineProperty(input, 'files', { value: [big], configurable: true });
-    fireEvent.change(input);
-    await new Promise((r) => setTimeout(r, 0));
+    await act(async () => {
+      fireEvent.change(input);
+      await new Promise((r) => setTimeout(r, 0));
+    });
     expect(screen.getByText(/muito grande/i)).toBeInTheDocument();
     expect(onChange).not.toHaveBeenCalled();
   });
