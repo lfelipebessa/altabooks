@@ -46,7 +46,7 @@ export function BotaoSalvarSticky({
       )}
 
       {errosPendentes > 0 && (
-        <span className="text-xs text-yellow-700">
+        <span className="text-xs text-red-700">
           {errosPendentes} {errosPendentes === 1 ? 'erro pendente' : 'erros pendentes'}
         </span>
       )}

@@ -84,6 +84,15 @@ describe('Tabs', () => {
     expect(onValueChange).toHaveBeenCalledWith('c');
   });
 
+  it('Arrow Right move foco pro novo trigger', () => {
+    render(<ExemploTabs value="a" onValueChange={() => {}} />);
+    const triggerA = screen.getByRole('tab', { name: 'A' });
+    const triggerB = screen.getByRole('tab', { name: 'B' });
+    triggerA.focus();
+    fireEvent.keyDown(triggerA, { key: 'ArrowRight' });
+    expect(triggerB).toHaveFocus();
+  });
+
   it('tablist tem role correto', () => {
     render(<ExemploTabs />);
     expect(screen.getByRole('tablist')).toBeInTheDocument();

@@ -1,9 +1,8 @@
-import React, { createContext, useContext, useId, useRef } from 'react';
+import React, { createContext, useContext, useId } from 'react';
 
 interface TabsContextValue {
   value: string;
   onValueChange: (v: string) => void;
-  registerTrigger: (value: string, el: HTMLButtonElement | null) => void;
   baseId: string;
 }
 
@@ -23,15 +22,9 @@ interface TabsRootProps {
 
 const TabsRoot: React.FC<TabsRootProps> = ({ value, onValueChange, children }) => {
   const baseId = useId();
-  const triggersRef = useRef<Map<string, HTMLButtonElement>>(new Map());
-
-  const registerTrigger = (v: string, el: HTMLButtonElement | null) => {
-    if (el) triggersRef.current.set(v, el);
-    else triggersRef.current.delete(v);
-  };
 
   return (
-    <TabsContext.Provider value={{ value, onValueChange, registerTrigger, baseId }}>
+    <TabsContext.Provider value={{ value, onValueChange, baseId }}>
       <div>{children}</div>
     </TabsContext.Provider>
   );
@@ -59,7 +52,7 @@ interface TabsTriggerProps {
 }
 
 const TabsTrigger: React.FC<TabsTriggerProps> = ({ value: triggerValue, children }) => {
-  const { value, onValueChange, registerTrigger, baseId } = useTabs();
+  const { value, onValueChange, baseId } = useTabs();
   const isActive = value === triggerValue;
   const triggerId = `${baseId}-trigger-${triggerValue}`;
   const panelId = `${baseId}-panel-${triggerValue}`;
@@ -77,11 +70,11 @@ const TabsTrigger: React.FC<TabsTriggerProps> = ({ value: triggerValue, children
     else if (e.key === 'Home') next = 0;
     else if (e.key === 'End') next = arr.length - 1;
     onValueChange(values[next]);
+    arr[next].focus();
   };
 
   return (
     <button
-      ref={(el) => registerTrigger(triggerValue, el)}
       type="button"
       role="tab"
       id={triggerId}
