@@ -1,7 +1,7 @@
-import { Info, AlertTriangle, AlertOctagon } from 'lucide-react';
-import type { AlertaMetadados, SeveridadeAlerta } from '../../types/metadados';
+import type { AlertaMetadados } from '../../types/metadados';
 import type { DefinicaoCampo } from '../../lib/metadadosCampos';
 import { getByPath } from '../../lib/metadadosFlatten';
+import { Field, Input, Textarea, Select } from '../ui';
 
 interface Props {
   campo: DefinicaoCampo;
@@ -11,15 +11,10 @@ interface Props {
   disabled?: boolean;
 }
 
-const SEV_STYLES: Record<SeveridadeAlerta, { Icon: typeof Info; cor: string }> = {
-  info: { Icon: Info, cor: 'text-blue-700 bg-blue-50 border-blue-200' },
-  aviso: { Icon: AlertTriangle, cor: 'text-yellow-800 bg-yellow-50 border-yellow-200' },
-  erro: { Icon: AlertOctagon, cor: 'text-red-800 bg-red-50 border-red-200' },
-};
-
 export function CampoComAlerta({ campo, json, alertas, onChange, disabled }: Props) {
   const valorAtual = getByPath(json, campo.path);
   const alertasDoCampo = alertas.filter(a => a.campo === campo.path);
+  const inputId = `campo-${campo.path.replace(/\./g, '-')}`;
 
   const handleChange = (raw: unknown) => {
     let v: unknown = raw;
@@ -32,74 +27,62 @@ export function CampoComAlerta({ campo, json, alertas, onChange, disabled }: Pro
   };
 
   return (
-    <div className="space-y-1">
-      <label className="block text-sm font-medium text-brand-text-main">{campo.label}</label>
-
+    <Field
+      label={campo.label}
+      htmlFor={inputId}
+      description={campo.placeholder}
+      alerts={alertasDoCampo.map(a => ({ severidade: a.severidade, mensagem: a.mensagem }))}
+    >
       {campo.tipo === 'texto' && (
-        <input
+        <Input
+          id={inputId}
           type="text"
-          className="w-full px-3 py-2 border rounded text-sm"
           value={(valorAtual as string) ?? ''}
-          placeholder={campo.placeholder}
           disabled={disabled}
           onChange={e => handleChange(e.target.value)}
         />
       )}
-
       {campo.tipo === 'numero' && (
-        <input
+        <Input
+          id={inputId}
           type="number"
-          className="w-full px-3 py-2 border rounded text-sm"
           value={(valorAtual as number | null) ?? ''}
           disabled={disabled}
           onChange={e => handleChange(e.target.value)}
         />
       )}
-
       {campo.tipo === 'texto_longo' && (
-        <textarea
+        <Textarea
+          id={inputId}
           rows={4}
-          className="w-full px-3 py-2 border rounded text-sm"
           value={(valorAtual as string) ?? ''}
           disabled={disabled}
           onChange={e => handleChange(e.target.value)}
         />
       )}
-
       {campo.tipo === 'lista_texto' && (
-        <textarea
+        <Textarea
+          id={inputId}
           rows={3}
-          className="w-full px-3 py-2 border rounded text-sm font-mono"
+          placeholder="Um item por linha"
           value={Array.isArray(valorAtual) ? (valorAtual as string[]).join('\n') : ''}
           disabled={disabled}
-          placeholder="Um item por linha"
           onChange={e => handleChange(e.target.value)}
         />
       )}
-
       {campo.tipo === 'select' && (
-        <select
-          className="w-full px-3 py-2 border rounded text-sm"
+        <Select
+          id={inputId}
           value={(valorAtual as string) ?? ''}
+          placeholder="—"
           disabled={disabled}
           onChange={e => handleChange(e.target.value)}
         >
-          <option value="">—</option>
           {campo.opcoes?.map(o => (
             <option key={o} value={o}>{o}</option>
           ))}
-        </select>
+        </Select>
       )}
-
-      {alertasDoCampo.map((a, i) => {
-        const { Icon, cor } = SEV_STYLES[a.severidade];
-        return (
-          <div key={i} className={`flex items-start gap-2 text-xs px-2 py-1 rounded border ${cor}`}>
-            <Icon className="w-3 h-3 mt-0.5 shrink-0" />
-            <span>{a.mensagem}</span>
-          </div>
-        );
-      })}
-    </div>
+    </Field>
   );
 }
