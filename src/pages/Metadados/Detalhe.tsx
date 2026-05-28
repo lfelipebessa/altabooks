@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { Loader2, RefreshCw } from 'lucide-react';
-import { TopBar } from '../../components/TopBar';
+import { RefreshCw } from 'lucide-react';
+import { PageLayout, LoadingState, ErrorState } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
 import { useMetadadosJob } from '../../hooks/useMetadadosJob';
 import { dispararGeracao, regerarXlsx } from '../../lib/metadadosWebhook';
@@ -30,6 +30,16 @@ export function MetadadosDetalhe() {
       setDirty(false);
     }
   }, [job?.metadados_json]);
+
+  const errosPendentes = useMemo(
+    () => (job?.alertas ?? []).filter(a => a.severidade === 'erro').length,
+    [job?.alertas]
+  );
+
+  const avisosPendentes = useMemo(
+    () => (job?.alertas ?? []).filter(a => a.severidade === 'aviso').length,
+    [job?.alertas]
+  );
 
   const minutosProcessando =
     job?.status === 'processando' ? (Date.now() - new Date(job.updated_at).getTime()) / 60000 : 0;
@@ -97,77 +107,100 @@ export function MetadadosDetalhe() {
     await refetch();
   }, [job, refetch]);
 
-  if (loading) return <div className="min-h-screen"><TopBar /><div className="pt-[96px] p-6">Carregando…</div></div>;
-  if (!job) return <div className="min-h-screen"><TopBar /><div className="pt-[96px] p-6">Job não encontrado.</div></div>;
+  if (loading) {
+    return <PageLayout><LoadingState /></PageLayout>;
+  }
+  if (!job) {
+    return <PageLayout><ErrorState message="Job não encontrado." /></PageLayout>;
+  }
 
   return (
-    <div className="min-h-screen bg-brand-bg-section flex flex-col">
-      <TopBar />
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 pt-[96px] pb-6 space-y-4">
-        <header className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-serif text-brand-text-main">{job.titulo || 'Metadados em processamento'}</h1>
-            {job.autor && <p className="text-sm text-brand-text-body">por {job.autor}</p>}
+    <PageLayout>
+      <div className="max-w-5xl mx-auto">
+        {/* Header sticky abaixo do TopBar */}
+        <header className="sticky top-[80px] z-30 bg-white border-b border-gray-200 -mx-6 px-6 py-4 mb-4">
+          <div className="max-w-5xl mx-auto flex items-start justify-between gap-3">
+            <div>
+              <h1 className="font-serif text-3xl font-bold text-brand-text-main">
+                {job.titulo || 'Metadados em processamento'}
+              </h1>
+              {job.autor && <p className="text-sm text-gray-600">por {job.autor}</p>}
+              {(errosPendentes > 0 || avisosPendentes > 0) && (
+                <p className="text-sm text-yellow-700 mt-1">
+                  {errosPendentes > 0 && <>{'⚠'} {errosPendentes} {errosPendentes === 1 ? 'erro' : 'erros'}</>}
+                  {errosPendentes > 0 && avisosPendentes > 0 && ' · '}
+                  {avisosPendentes > 0 && <>{avisosPendentes} {avisosPendentes === 1 ? 'aviso' : 'avisos'}</>}
+                </p>
+              )}
+            </div>
+            <StatusBadgeMetadados status={job.status} />
           </div>
-          <StatusBadgeMetadados status={job.status} />
         </header>
 
-        {alertaDup && outroJobId && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded p-3 space-y-2">
-            <p className="text-sm text-yellow-900">{alertaDup.mensagem}</p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => apagarDuplicado(outroJobId)}
-                className="px-3 py-1.5 text-sm rounded bg-red-600 text-white"
-              >
-                Apagar versão anterior
-              </button>
-              <button
-                onClick={manterAmbos}
-                className="px-3 py-1.5 text-sm rounded border bg-white"
-              >
-                Manter ambos
-              </button>
+        <div className="space-y-4">
+          {alertaDup && outroJobId && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 space-y-2">
+              <p className="text-sm text-yellow-900">{alertaDup.mensagem}</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => apagarDuplicado(outroJobId)}
+                  className="px-3 py-1.5 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700"
+                >
+                  Apagar versão anterior
+                </button>
+                <button
+                  onClick={manterAmbos}
+                  className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 bg-white hover:bg-brand-bg-card"
+                >
+                  Manter ambos
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {(job.status === 'aguardando' || job.status === 'processando') && (
-          <div className="bg-white border rounded p-6 text-center space-y-3">
-            <Loader2 className="w-6 h-6 animate-spin mx-auto text-blue-600" />
-            <p className="text-sm text-gray-600">
-              {job.status === 'aguardando' ? 'Aguardando início do processamento…' : 'Extraindo metadados com o Gemini…'}
-            </p>
-            {travado && (
-              <button onClick={tentarDeNovo} className="inline-flex items-center gap-2 text-sm text-blue-700 underline">
-                <RefreshCw className="w-3 h-3" /> Job parece travado há mais de 5min. Reiniciar processamento.
-              </button>
-            )}
-          </div>
-        )}
+          {(job.status === 'aguardando' || job.status === 'processando') && (
+            <LoadingState
+              message={job.status === 'aguardando' ? 'Aguardando início do processamento…' : 'Extraindo metadados com o Gemini…'}
+              action={
+                travado ? (
+                  <button
+                    onClick={tentarDeNovo}
+                    className="inline-flex items-center gap-2 text-sm text-blue-700 underline hover:text-blue-800"
+                  >
+                    <RefreshCw className="w-3 h-3" /> Job parece travado há mais de 5min. Reiniciar processamento.
+                  </button>
+                ) : undefined
+              }
+            />
+          )}
 
-        {job.status === 'erro' && (
-          <div className="bg-red-50 border border-red-200 rounded p-4 space-y-2">
-            <p className="text-sm text-red-800 font-medium">Falha ao gerar metadados</p>
-            {job.erro_mensagem && <p className="text-sm text-red-700">{job.erro_mensagem}</p>}
-            <button onClick={tentarDeNovo} className="px-3 py-1.5 rounded bg-red-600 text-white text-sm">
-              Tentar de novo
-            </button>
-          </div>
-        )}
+          {job.status === 'erro' && (
+            <ErrorState
+              message={job.erro_mensagem || 'Falha ao gerar metadados'}
+              onRetry={tentarDeNovo}
+            />
+          )}
 
-        {job.status === 'pronto' && localJson && (
-          <FormMetadados
-            jsonInicial={localJson}
-            alertas={job.alertas || []}
-            onChange={(novo, isDirty) => { setLocalJson(novo); setDirty(isDirty); }}
-          />
-        )}
-      </main>
+          {job.status === 'pronto' && localJson && (
+            <FormMetadados
+              jsonInicial={localJson}
+              alertas={job.alertas || []}
+              onChange={(novo, isDirty) => { setLocalJson(novo); setDirty(isDirty); }}
+            />
+          )}
+        </div>
+      </div>
 
       {job.status === 'pronto' && (
-        <BotaoSalvarSticky dirty={dirty} salvando={salvando} baixando={baixando} onSalvar={salvar} onBaixar={baixar} />
+        <BotaoSalvarSticky
+          dirty={dirty}
+          salvando={salvando}
+          baixando={baixando}
+          errosPendentes={errosPendentes}
+          onSalvar={salvar}
+          onBaixar={baixar}
+        />
       )}
-    </div>
+    </PageLayout>
   );
 }
