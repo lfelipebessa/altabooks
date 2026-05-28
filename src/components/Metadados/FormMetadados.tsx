@@ -1,15 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { MetadadosJSON, AlertaMetadados } from '../../types/metadados';
 import { setByPath } from '../../lib/metadadosFlatten';
-import {
-  CAMPOS_DADOS_BASICOS,
-  CAMPOS_DADOS_EDITORIAIS,
-  CAMPOS_TEXTOS,
-  CAMPOS_RELACIONADAS,
-  type DefinicaoCampo,
-} from '../../lib/metadadosCampos';
+import { SECOES, larguraDoCampo, type DefinicaoCampo } from '../../lib/metadadosCampos';
 import { CampoComAlerta } from './CampoComAlerta';
-import { SecaoColapsavel } from './SecaoColapsavel';
+import { Tabs } from '../ui';
 
 interface Props {
   jsonInicial: MetadadosJSON;
@@ -17,8 +11,13 @@ interface Props {
   onChange: (json: MetadadosJSON, dirty: boolean) => void;
 }
 
+function contarErrosDaSecao(alertas: AlertaMetadados[], prefixo: string): number {
+  return alertas.filter(a => a.severidade === 'erro' && a.campo.startsWith(prefixo)).length;
+}
+
 export function FormMetadados({ jsonInicial, alertas, onChange }: Props) {
   const [local, setLocal] = useState<MetadadosJSON>(jsonInicial);
+  const [tab, setTab] = useState<string>(SECOES[0].id);
 
   useEffect(() => {
     setLocal(jsonInicial);
@@ -30,23 +29,52 @@ export function FormMetadados({ jsonInicial, alertas, onChange }: Props) {
     onChange(novo, true);
   };
 
-  const renderCampos = (lista: DefinicaoCampo[]) =>
-    lista.map(campo => (
-      <CampoComAlerta
-        key={campo.path}
-        campo={campo}
-        json={local}
-        alertas={alertas}
-        onChange={handleField}
-      />
-    ));
+  const errosPorSecao = useMemo(
+    () => Object.fromEntries(SECOES.map(s => [s.id, contarErrosDaSecao(alertas, s.prefixo)])),
+    [alertas]
+  );
+
+  const renderCampo = (campo: DefinicaoCampo) => {
+    const largura = larguraDoCampo(campo);
+    return (
+      <div key={campo.path} className={largura === 'cheia' ? 'md:col-span-2' : ''}>
+        <CampoComAlerta
+          campo={campo}
+          json={local}
+          alertas={alertas}
+          onChange={handleField}
+        />
+      </div>
+    );
+  };
 
   return (
-    <div className="space-y-4">
-      <SecaoColapsavel titulo="Dados básicos">{renderCampos(CAMPOS_DADOS_BASICOS)}</SecaoColapsavel>
-      <SecaoColapsavel titulo="Dados editoriais">{renderCampos(CAMPOS_DADOS_EDITORIAIS)}</SecaoColapsavel>
-      <SecaoColapsavel titulo="Textos">{renderCampos(CAMPOS_TEXTOS)}</SecaoColapsavel>
-      <SecaoColapsavel titulo="Relacionadas">{renderCampos(CAMPOS_RELACIONADAS)}</SecaoColapsavel>
-    </div>
+    <Tabs value={tab} onValueChange={setTab}>
+      <Tabs.List>
+        {SECOES.map(secao => {
+          const erros = errosPorSecao[secao.id];
+          return (
+            <Tabs.Trigger key={secao.id} value={secao.id}>
+              <span className="inline-flex items-center gap-2">
+                {secao.label}
+                {erros > 0 && (
+                  <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-red-100 text-red-700 text-xs font-bold">
+                    {erros}
+                  </span>
+                )}
+              </span>
+            </Tabs.Trigger>
+          );
+        })}
+      </Tabs.List>
+
+      {SECOES.map(secao => (
+        <Tabs.Panel key={secao.id} value={secao.id}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {secao.campos.map(renderCampo)}
+          </div>
+        </Tabs.Panel>
+      ))}
+    </Tabs>
   );
 }
