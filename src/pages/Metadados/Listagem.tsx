@@ -1,16 +1,13 @@
 import { useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { PageLayout } from '../../components/ui/PageLayout';
-import { PageHeader } from '../../components/ui/PageHeader';
-import { EmptyState } from '../../components/ui/EmptyState';
-import { LoadingState } from '../../components/ui/LoadingState';
+import { PageLayout, PageHeader, EmptyState, LoadingState, ErrorState } from '../../components/ui';
 import { useMetadadosJobs } from '../../hooks/useMetadadosJobs';
 import { MetadadosCard } from '../../components/Metadados/MetadadosCard';
 import { NovaGeracaoModal } from '../../components/Metadados/NovaGeracaoModal';
 
 export function MetadadosListagem() {
-  const { jobs, loading } = useMetadadosJobs();
+  const { jobs, loading, error, refetch } = useMetadadosJobs();
   const [busca, setBusca] = useState('');
   const [modalAberto, setModalAberto] = useState(false);
   const nav = useNavigate();
@@ -47,7 +44,9 @@ export function MetadadosListagem() {
 
       {loading && <LoadingState message="Carregando metadados…" />}
 
-      {!loading && filtrados.length === 0 && busca && (
+      {!loading && error && <ErrorState message={error} onRetry={refetch} />}
+
+      {!loading && !error && filtrados.length === 0 && busca && (
         <EmptyState
           title={`Nenhum resultado para "${busca}"`}
           action={
@@ -61,7 +60,7 @@ export function MetadadosListagem() {
         />
       )}
 
-      {!loading && filtrados.length === 0 && !busca && (
+      {!loading && !error && filtrados.length === 0 && !busca && (
         <EmptyState
           title="Nenhuma geração ainda"
           description='Clique em "Nova geração" pra começar.'
@@ -76,7 +75,7 @@ export function MetadadosListagem() {
         />
       )}
 
-      {!loading && filtrados.length > 0 && (
+      {!loading && !error && filtrados.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtrados.map((j) => (
             <MetadadosCard key={j.id} job={j} />
