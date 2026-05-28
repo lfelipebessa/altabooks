@@ -32,7 +32,7 @@ export function MetadadosListagem() {
         action={
           <button
             onClick={() => setModalAberto(true)}
-            className="inline-flex items-center gap-2 bg-brand-primary hover:bg-brand-hover text-brand-text-main font-bold py-2 px-4 rounded-lg transition-colors text-sm cursor-pointer"
+            className="inline-flex items-center gap-2 whitespace-nowrap shrink-0 bg-brand-primary hover:bg-brand-hover text-brand-text-main font-bold py-2 px-4 rounded-lg transition-colors text-sm cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Nova geração
