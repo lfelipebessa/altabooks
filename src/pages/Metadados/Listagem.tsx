@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { TopBar } from '../../components/TopBar';
-import { SearchBar } from '../../components/SearchBar';
+import { PageLayout } from '../../components/ui/PageLayout';
+import { PageHeader } from '../../components/ui/PageHeader';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { LoadingState } from '../../components/ui/LoadingState';
 import { useMetadadosJobs } from '../../hooks/useMetadadosJobs';
 import { MetadadosCard } from '../../components/Metadados/MetadadosCard';
 import { NovaGeracaoModal } from '../../components/Metadados/NovaGeracaoModal';
@@ -16,42 +18,80 @@ export function MetadadosListagem() {
   const filtrados = useMemo(() => {
     const q = busca.trim().toLowerCase();
     if (!q) return jobs;
-    return jobs.filter(j =>
-      [j.titulo, j.autor, j.isbn, j.selo].filter(Boolean).some(s => s!.toLowerCase().includes(q))
+    return jobs.filter((j) =>
+      [j.titulo, j.autor, j.isbn, j.selo]
+        .filter(Boolean)
+        .some((s) => s!.toLowerCase().includes(q))
     );
   }, [jobs, busca]);
 
   return (
-    <div className="min-h-screen bg-brand-bg-section">
-      <TopBar />
-      <main className="max-w-6xl mx-auto px-4 pt-[96px] pb-6 space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-serif text-brand-text-main">Metadados</h1>
+    <PageLayout>
+      <PageHeader
+        title="Metadados"
+        action={
           <button
             onClick={() => setModalAberto(true)}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded bg-brand-primary text-black font-medium hover:bg-brand-hover"
+            className="inline-flex items-center gap-2 bg-brand-primary hover:bg-brand-hover text-brand-text-main font-bold py-2 px-4 rounded-lg transition-colors text-sm cursor-pointer"
           >
-            <Plus className="w-4 h-4" /> Nova geração
+            <Plus className="w-4 h-4" />
+            Nova geração
           </button>
+        }
+        search={{
+          value: busca,
+          onChange: setBusca,
+          placeholder: 'Buscar por título, autor, ISBN ou selo…',
+        }}
+      />
+
+      {loading && <LoadingState message="Carregando metadados…" />}
+
+      {!loading && filtrados.length === 0 && busca && (
+        <EmptyState
+          title={`Nenhum resultado para "${busca}"`}
+          action={
+            <button
+              onClick={() => setBusca('')}
+              className="text-brand-primary font-medium hover:underline cursor-pointer"
+            >
+              Limpar busca
+            </button>
+          }
+        />
+      )}
+
+      {!loading && filtrados.length === 0 && !busca && (
+        <EmptyState
+          title="Nenhuma geração ainda"
+          description='Clique em "Nova geração" pra começar.'
+          action={
+            <button
+              onClick={() => setModalAberto(true)}
+              className="bg-brand-primary hover:bg-brand-hover text-brand-text-main font-bold py-2 px-6 rounded-lg transition-colors cursor-pointer"
+            >
+              Nova geração
+            </button>
+          }
+        />
+      )}
+
+      {!loading && filtrados.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filtrados.map((j) => (
+            <MetadadosCard key={j.id} job={j} />
+          ))}
         </div>
-
-        <SearchBar value={busca} onChange={setBusca} />
-
-        {loading && <p className="text-sm text-gray-500">Carregando…</p>}
-        {!loading && filtrados.length === 0 && (
-          <p className="text-sm text-gray-500">Nenhum projeto de metadados ainda. Clique em "Nova geração".</p>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {filtrados.map(j => <MetadadosCard key={j.id} job={j} />)}
-        </div>
-      </main>
+      )}
 
       <NovaGeracaoModal
         open={modalAberto}
         onClose={() => setModalAberto(false)}
-        onSucesso={id => { setModalAberto(false); nav(`/metadados/${id}`); }}
+        onSucesso={(id) => {
+          setModalAberto(false);
+          nav(`/metadados/${id}`);
+        }}
       />
-    </div>
+    </PageLayout>
   );
 }
