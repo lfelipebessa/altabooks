@@ -4,9 +4,14 @@ import { Search } from 'lucide-react';
 interface SearchBarProps {
     value: string;
     onChange: (value: string) => void;
+    placeholder?: string;
 }
 
-export const SearchBar: React.FC<SearchBarProps> = ({ value, onChange }) => {
+export const SearchBar: React.FC<SearchBarProps> = ({
+    value,
+    onChange,
+    placeholder = 'Buscar por projeto ou autor...',
+}) => {
     return (
         <div className="relative w-full max-w-md">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -15,7 +20,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ value, onChange }) => {
             <input
                 type="text"
                 className="block w-full pl-10 pr-3 py-2 border border-transparent rounded-md leading-5 bg-brand-bg-card placeholder-gray-500 focus:outline-none focus:bg-white focus:border-brand-primary focus:ring-1 focus:ring-brand-primary sm:text-sm transition-colors duration-200"
-                placeholder="Buscar por projeto ou autor..."
+                placeholder={placeholder}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
             />
