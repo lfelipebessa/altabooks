@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useId, useMemo, useState } from 'react';
 import { useDropzone, type Accept } from 'react-dropzone';
 import { UploadCloud, File as FileIcon, X, Loader2, Check, AlertCircle, AlertTriangle } from 'lucide-react';
 
@@ -59,6 +59,9 @@ export function FileDropzone<M extends Mode>(props: FileDropzoneProps<M>) {
     maxFiles,
   } = props;
 
+  const inputId = useId();
+  const [rejectionMessage, setRejectionMessage] = useState<string | null>(null);
+
   const currentFiles: File[] = useMemo(() => {
     if (mode === 'single') return value ? [value as File] : [];
     return value as File[];
@@ -76,6 +79,7 @@ export function FileDropzone<M extends Mode>(props: FileDropzoneProps<M>) {
     multiple: mode === 'multiple',
     disabled: dropDisabled,
     onDrop: (accepted) => {
+      setRejectionMessage(null);
       if (accepted.length === 0) return;
       if (mode === 'single') {
         onChange(accepted[0] as Value<M>);
@@ -83,6 +87,16 @@ export function FileDropzone<M extends Mode>(props: FileDropzoneProps<M>) {
         const merged = [...currentFiles, ...accepted];
         const sliced = maxFiles ? merged.slice(0, maxFiles) : merged;
         onChange(sliced as Value<M>);
+      }
+    },
+    onDropRejected: (rejections) => {
+      const first = rejections[0]?.errors[0];
+      if (first?.code === 'file-too-large') {
+        setRejectionMessage(`Arquivo muito grande (máx ${formatBytes(maxSize)})`);
+      } else if (first?.code === 'file-invalid-type') {
+        setRejectionMessage('Tipo de arquivo não aceito');
+      } else {
+        setRejectionMessage(first?.message || 'Arquivo rejeitado');
       }
     },
   });
@@ -103,7 +117,7 @@ export function FileDropzone<M extends Mode>(props: FileDropzoneProps<M>) {
   return (
     <div className="space-y-2">
       {label && (
-        <label className="block text-sm font-medium text-brand-text-main">{label}</label>
+        <label htmlFor={inputId} className="block text-sm font-medium text-brand-text-main">{label}</label>
       )}
 
       {(mode === 'multiple' || currentFiles.length === 0) && (
@@ -113,7 +127,7 @@ export function FileDropzone<M extends Mode>(props: FileDropzoneProps<M>) {
             ${isDragActive ? 'border-brand-primary bg-brand-bg-badge' : 'border-brand-bg-card bg-brand-bg-section hover:border-brand-primary/50'}
             ${dropDisabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
         >
-          <input {...getInputProps()} />
+          <input {...getInputProps()} id={inputId} />
           <UploadCloud className={`w-8 h-8 mx-auto mb-2 ${isDragActive ? 'text-brand-primary' : 'text-gray-400'}`} />
           <p className="text-sm font-medium text-brand-text-main">
             {isDragActive ? 'Solte aqui' : 'Arraste o arquivo ou clique pra selecionar'}
@@ -125,9 +139,9 @@ export function FileDropzone<M extends Mode>(props: FileDropzoneProps<M>) {
         </div>
       )}
 
-      {errorMessage && (
+      {(errorMessage || rejectionMessage) && (
         <div className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-          {errorMessage}
+          {errorMessage || rejectionMessage}
         </div>
       )}
 

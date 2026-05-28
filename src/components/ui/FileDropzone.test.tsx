@@ -125,6 +125,26 @@ describe('FileDropzone — single', () => {
     );
     expect(screen.getByLabelText('Enviado')).toBeInTheDocument();
   });
+
+  it('mostra mensagem quando arquivo é rejeitado por tamanho', async () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <FileDropzone
+        mode="single"
+        accept={PDF}
+        maxSize={100}
+        value={null}
+        onChange={onChange}
+      />
+    );
+    const big = makeFile('grande.pdf', 1_000_000);
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    Object.defineProperty(input, 'files', { value: [big], configurable: true });
+    fireEvent.change(input);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(screen.getByText(/muito grande/i)).toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+  });
 });
 
 describe('FileDropzone — multiple', () => {
