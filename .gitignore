@@ -27,3 +27,9 @@ Thumbs.db
 
 # TypeScript
 *.tsbuildinfo
+
+# Brainstorming visual companion (transient mockups)
+.superpowers/
+
+# Specs/plans/workflows — internos, podem conter chaves de webhook hardcoded
+docs/superpowers/
