@@ -18,7 +18,7 @@ export function BotaoSalvarSticky({
   onBaixar,
 }: Props) {
   return (
-    <div className="sticky bottom-0 bg-white border-t border-gray-200 shadow-md px-6 py-3 flex items-center justify-end gap-4">
+    <div className="sticky bottom-4 bg-white border border-gray-200 rounded-xl shadow-lg px-6 py-3 flex items-center justify-end gap-4">
       {dirty || salvando ? (
         <button
           type="button"
