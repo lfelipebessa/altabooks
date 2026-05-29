@@ -26,7 +26,7 @@ import { ConfiguracoesProjetoModal } from '../components/ConfiguracoesProjetoMod
 import { ExecutivoPanel } from '../components/ExecutivoPanel';
 import { DownloadButton } from '../components/DownloadButton';
 import { buildLivroHtml, buildTraducaoHtml } from '../lib/buildHtml';
-import logo from '../assets/logo-alta-books.png';
+import { TopBar } from '../components/TopBar';
 
 // ─── Pipeline ────────────────────────────────────────────────────────────────
 
@@ -545,17 +545,7 @@ export const DetalheProjeto: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-brand-bg-section pb-20">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 h-[72px] bg-[#111111] z-40 flex items-center justify-between px-8 shadow-md">
-        <img src={logo} alt="Alta Books" className="h-[42px] w-auto brightness-0 invert" />
-        <button
-          onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-gray-400 hover:text-[#F5C518] font-medium py-1.5 px-3 rounded transition-colors text-sm"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Todos os projetos
-        </button>
-      </header>
+      <TopBar />
 
       <main className="max-w-4xl mx-auto px-6 pt-[100px] space-y-6">
 

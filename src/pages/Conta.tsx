@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import logo from '../assets/logo-alta-books.png';
+import { TopBar } from '../components/TopBar';
 import { ArrowLeft } from 'lucide-react';
 
 export const Conta: React.FC = () => {
@@ -43,12 +43,8 @@ export const Conta: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FB]">
-      <header className="fixed top-0 left-0 right-0 h-[80px] bg-[#111111] z-40 flex items-center justify-between px-[32px] shadow-md">
-        <div className="flex items-center">
-          <img src={logo} alt="Alta Books" className="h-[48px] w-auto brightness-0 invert" />
-        </div>
-      </header>
+    <div className="min-h-screen bg-brand-bg-section">
+      <TopBar />
 
       <div className="pt-[80px] flex items-start justify-center p-8">
         <div className="bg-white rounded-2xl shadow-md p-10 w-full max-w-md mt-8">
