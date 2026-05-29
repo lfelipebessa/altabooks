@@ -9,7 +9,6 @@ export interface Module {
 
 export const MODULES: readonly Module[] = [
   { slug: 'ghostwriter',  label: 'Projetos (Livros)' },
-  { slug: 'agente_verde', label: 'Agente Verde' },
   { slug: 'metadados',    label: 'Gerador de Metadados' },
   { slug: 'admin',        label: 'Administrador' },
 ] as const

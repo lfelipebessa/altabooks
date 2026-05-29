@@ -35,13 +35,17 @@ export const TopBar: React.FC<TopBarProps> = ({ onNewProject }) => {
 
   return (
     <header className="fixed top-0 left-0 right-0 h-[80px] bg-[#111111] z-40 flex items-center justify-between px-[32px] shadow-md">
-      <div className="flex items-center">
+      <Link
+        to="/"
+        aria-label="Ir para a página inicial"
+        className="flex items-center rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F5C518]"
+      >
         <img
           src={logo}
           alt="Alta Books"
-          className="h-[48px] w-auto brightness-0 invert"
+          className="h-[48px] w-auto brightness-0 invert transition-opacity hover:opacity-80"
         />
-      </div>
+      </Link>
 
       <div className="flex items-center gap-3">
         {modules.has('ghostwriter') && (
@@ -50,14 +54,6 @@ export const TopBar: React.FC<TopBarProps> = ({ onNewProject }) => {
             className="flex items-center gap-2 text-white/70 hover:text-[#F5C518] transition-colors text-sm font-medium px-3 py-1.5 rounded"
           >
             Projetos
-          </Link>
-        )}
-        {modules.has('agente_verde') && (
-          <Link
-            to="/agente-verde"
-            className="flex items-center gap-2 text-white/70 hover:text-[#F5C518] transition-colors text-sm font-medium px-3 py-1.5 rounded"
-          >
-            Agente Verde
           </Link>
         )}
         {modules.has('metadados') && (
