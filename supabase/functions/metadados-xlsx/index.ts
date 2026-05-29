@@ -129,15 +129,29 @@ function parsePcp(pcpB64: string) {
     if (key) found[key] = valCell ? valCell.v : null;
   }
 
-  const alertas_pcp: Array<{ campo: string; severidade: string; mensagem: string }> = [];
+  const ausentes: string[] = [];
   for (const k of CAMPOS_ESPERADOS_PCP) {
     if (!(k in found) || found[k] === null || found[k] === '') {
-      alertas_pcp.push({
-        campo: 'pcp.' + k,
-        severidade: 'aviso',
-        mensagem: `Campo "${k}" ausente na PCP — Gemini tentará extrair de capa/miolo`,
-      });
+      ausentes.push(k);
     }
+  }
+
+  const total = CAMPOS_ESPERADOS_PCP.length;
+  const limiteConsolidacao = Math.ceil(total * 0.8);
+
+  let alertas_pcp: Array<{ campo: string; severidade: string; mensagem: string }>;
+  if (ausentes.length >= limiteConsolidacao) {
+    alertas_pcp = [{
+      campo: 'pcp',
+      severidade: 'aviso',
+      mensagem: `PCP praticamente vazia (${ausentes.length} de ${total} campos ausentes). Gemini tentou extrair tudo de capa/miolo.`,
+    }];
+  } else {
+    alertas_pcp = ausentes.map(k => ({
+      campo: 'pcp.' + k,
+      severidade: 'aviso',
+      mensagem: `Campo "${k}" ausente na PCP — Gemini tentará extrair de capa/miolo`,
+    }));
   }
 
   const pcp_texto = Object.entries(found)

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, ChevronRight, AlertCircle, AlertTriangle, Info } from 'lucide-react';
 import { PageLayout, LoadingState, ErrorState } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
 import { useMetadadosJob } from '../../hooks/useMetadadosJob';
@@ -8,12 +8,37 @@ import { dispararGeracao, regerarXlsx } from '../../lib/metadadosWebhook';
 import { FormMetadados } from '../../components/Metadados/FormMetadados';
 import { BotaoSalvarSticky } from '../../components/Metadados/BotaoSalvarSticky';
 import { StatusBadgeMetadados } from '../../components/Metadados/StatusBadgeMetadados';
-import type { MetadadosJSON } from '../../types/metadados';
+import { SECOES } from '../../lib/metadadosCampos';
+import type { MetadadosJSON, AlertaMetadados } from '../../types/metadados';
 
 function extrairOutroJobId(msg: string | undefined): string | null {
   if (!msg) return null;
   const m = msg.match(/job ([0-9a-f-]{36})/i);
   return m?.[1] ?? null;
+}
+
+const PATHS_CONHECIDOS = new Set<string>(
+  SECOES.flatMap(s => s.campos.map(c => c.path))
+);
+
+const GRUPO_LABEL: Record<string, string> = {
+  pcp: 'PCP',
+  dados_basicos: 'Dados básicos',
+  dados_editoriais: 'Dados editoriais',
+  textos: 'Textos',
+  relacionadas: 'Relacionadas',
+};
+
+function ehAlertaIsbnDuplicado(a: AlertaMetadados): boolean {
+  return a.campo === 'dados_basicos.isbn' && a.mensagem.includes('outra geração');
+}
+
+function ehAlertaCobertoPeloForm(a: AlertaMetadados): boolean {
+  if (PATHS_CONHECIDOS.has(a.campo)) return true;
+  // sub-paths de arrays (ex.: "dados_editoriais.bisac[0]") são cobertos
+  // pelo input do array pai (ex.: "dados_editoriais.bisac")
+  const pathBase = a.campo.replace(/\[\d+\]$/, '');
+  return pathBase !== a.campo && PATHS_CONHECIDOS.has(pathBase);
 }
 
 export function MetadadosDetalhe() {
@@ -39,6 +64,23 @@ export function MetadadosDetalhe() {
   const avisosPendentes = useMemo(
     () => (job?.alertas ?? []).filter(a => a.severidade === 'aviso').length,
     [job?.alertas]
+  );
+
+  const alertasOrfaosPorGrupo = useMemo(() => {
+    const orfaos = (job?.alertas ?? []).filter(
+      a => !ehAlertaIsbnDuplicado(a) && !ehAlertaCobertoPeloForm(a)
+    );
+    const grupos: Record<string, AlertaMetadados[]> = {};
+    for (const a of orfaos) {
+      const chave = a.campo.split('.')[0] || 'outros';
+      (grupos[chave] ??= []).push(a);
+    }
+    return grupos;
+  }, [job?.alertas]);
+
+  const totalOrfaos = useMemo(
+    () => Object.values(alertasOrfaosPorGrupo).reduce((acc, arr) => acc + arr.length, 0),
+    [alertasOrfaosPorGrupo]
   );
 
   const minutosProcessando =
@@ -164,6 +206,42 @@ export function MetadadosDetalhe() {
                 </button>
               </div>
             </div>
+          )}
+
+          {totalOrfaos > 0 && (
+            <details className="group bg-white border border-gray-200 rounded-lg overflow-hidden">
+              <summary className="cursor-pointer list-none px-4 py-3 flex items-center gap-2 text-sm font-medium text-brand-text-main hover:bg-brand-bg-card/40">
+                <ChevronRight className="w-4 h-4 text-gray-400 transition-transform group-open:rotate-90" />
+                Outros alertas
+                <span className="inline-flex items-center justify-center min-w-[1.5rem] h-5 px-1.5 rounded-full bg-gray-100 text-gray-600 text-xs font-bold">
+                  {totalOrfaos}
+                </span>
+                <span className="text-xs font-normal text-gray-500 ml-1">
+                  · não estão ligados a nenhum campo do formulário
+                </span>
+              </summary>
+              <div className="px-4 pb-4 pt-1 space-y-4 border-t border-gray-100">
+                {Object.entries(alertasOrfaosPorGrupo).map(([grupo, alertas]) => (
+                  <div key={grupo}>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mt-3 mb-2">
+                      {GRUPO_LABEL[grupo] ?? grupo} ({alertas.length})
+                    </p>
+                    <ul className="space-y-1.5">
+                      {alertas.map((a, i) => {
+                        const Icon = a.severidade === 'erro' ? AlertCircle : a.severidade === 'aviso' ? AlertTriangle : Info;
+                        const cor = a.severidade === 'erro' ? 'text-red-600' : a.severidade === 'aviso' ? 'text-yellow-700' : 'text-blue-700';
+                        return (
+                          <li key={`${a.campo}-${i}`} className="text-sm flex items-start gap-2">
+                            <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${cor}`} />
+                            <span className="text-gray-700">{a.mensagem}</span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </details>
           )}
 
           {(job.status === 'aguardando' || job.status === 'processando') && (
