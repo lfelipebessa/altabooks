@@ -121,6 +121,22 @@ describe('useUploadMetadados', () => {
     expect(dispararMock).not.toHaveBeenCalled();
   });
 
+  it('rejeita arquivo vazio (0 byte) sem tocar no banco', async () => {
+    const { result } = renderHook(() => useUploadMetadados());
+
+    await act(async () => {
+      await expect(result.current.upload({
+        capa: file('capa.pdf', 100, 'application/pdf'),
+        miolo: file('miolo.pdf', 200, 'application/pdf'),
+        pcp: file('pcp.docx', 0, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
+      })).rejects.toThrow(/vazio ou corrompido.*PCP/);
+    });
+
+    expect(insertMock).not.toHaveBeenCalled();
+    expect(uploadMock).not.toHaveBeenCalled();
+    expect(deleteMock).not.toHaveBeenCalled();
+  });
+
   it('valida tamanho: rejeita capa > 30MB sem tocar no banco', async () => {
     const { result } = renderHook(() => useUploadMetadados());
 

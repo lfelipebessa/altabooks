@@ -76,6 +76,7 @@ export function FileDropzone<M extends Mode>(props: FileDropzoneProps<M>) {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept,
     maxSize,
+    minSize: 1,
     multiple: mode === 'multiple',
     disabled: dropDisabled,
     onDrop: (accepted) => {
@@ -93,6 +94,8 @@ export function FileDropzone<M extends Mode>(props: FileDropzoneProps<M>) {
       const first = rejections[0]?.errors[0];
       if (first?.code === 'file-too-large') {
         setRejectionMessage(`Arquivo muito grande (máx ${formatBytes(maxSize)})`);
+      } else if (first?.code === 'file-too-small') {
+        setRejectionMessage('Arquivo vazio ou corrompido (0 bytes)');
       } else if (first?.code === 'file-invalid-type') {
         setRejectionMessage('Tipo de arquivo não aceito');
       } else {

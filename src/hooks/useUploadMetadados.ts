@@ -25,6 +25,13 @@ export function useUploadMetadados() {
   const [progresso, setProgresso] = useState({ capa: false, miolo: false, pcp: false });
 
   const upload = useCallback(async (input: UploadInput): Promise<string> => {
+    // Arquivo de 0 byte (origem corrompida) passa pelo upload mas trava o job no n8n
+    // (parse-pcp devolve 400) — barra na entrada com mensagem clara.
+    const vazios = ([['Capa', input.capa], ['Miolo', input.miolo], ['PCP', input.pcp]] as const)
+      .filter(([, f]) => f.size === 0)
+      .map(([nome]) => nome);
+    if (vazios.length) throw new Error(`Arquivo vazio ou corrompido: ${vazios.join(', ')}`);
+
     if (input.capa.size > LIMITES.capa) throw new Error(`Capa excede ${LIMITES.capa / (1024 * 1024)} MB`);
     if (input.miolo.size > LIMITES.miolo) throw new Error(`Miolo excede ${LIMITES.miolo / (1024 * 1024)} MB`);
     if (input.pcp.size > LIMITES.pcp) throw new Error(`PCP excede ${LIMITES.pcp / (1024 * 1024)} MB`);
