@@ -1,6 +1,6 @@
 // Edge Function: metadados-xlsx
 // 2 ações:
-//   1. parse-pcp       — recebe { pcp_b64 } e retorna { pcp_texto, alertas_pcp }
+//   1. parse-pcp       — recebe { pcp_b64 } (.xlsx ou .docx, auto-detectado) e retorna { pcp_texto, alertas_pcp }
 //   2. generate-bookinfo — recebe { metadados_json } e retorna { xlsx_b64 }
 //
 // Chamada pelo n8n no fluxo de geração de metadados.
@@ -9,6 +9,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7';
 import * as XLSX from 'https://esm.sh/xlsx@0.18.5';
+import { unzipSync, strFromU8 } from 'https://esm.sh/fflate@0.8.2';
 
 const COLUMN_MAP: Record<string, string> = {
   'A4': 'dados_basicos.isbn',
@@ -112,9 +113,70 @@ function resolveCell(spec: string, json: unknown): unknown {
   return value;
 }
 
+// xlsx e docx são ambos arquivos ZIP (header "PK"). Distingue pelo nome de entrada
+// interno (fica em texto puro nos local headers do ZIP), então não precisa do n8n
+// informar o formato — basta o arquivo.
+function isDocx(bytes: Uint8Array): boolean {
+  return strFromU8(bytes, true).includes('word/document.xml');
+}
+
+function decodeXmlEntities(s: string): string {
+  return s
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(Number(d)))
+    .replace(/&amp;/g, '&');
+}
+
+// Junta os runs dentro de cada parágrafo, mas separa parágrafos com "; " — uma célula
+// pode ter vários parágrafos (ex: lista de autores), que senão sairiam colados.
+function cellText(tc: string): string {
+  const paras = tc.match(/<w:p(?:\s[^>]*)?>[\s\S]*?<\/w:p>/g) ?? [tc];
+  return paras
+    .map((p) => {
+      const runs = [...p.matchAll(/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/g)].map((m) => m[1]);
+      return decodeXmlEntities(runs.join('')).trim();
+    })
+    .filter((l) => l !== '')
+    .join('; ');
+}
+
+// O DadosTecnicos.docx é uma tabela campo→valor (com sub-blocos CAPA/MIOLO de várias
+// colunas). Em vez de mapear campo-a-campo (labels divergem do template xlsx: asteriscos,
+// "(se houver)", chaves repetidas), entregamos o texto legível — o Gemini extrai a partir
+// dele, igual faz com capa/miolo.
+function parsePcpDocx(bytes: Uint8Array) {
+  let xml: string;
+  try {
+    const files = unzipSync(bytes, { filter: (f) => f.name === 'word/document.xml' });
+    const docXml = files['word/document.xml'];
+    if (!docXml) throw new Error('document.xml ausente');
+    xml = strFromU8(docXml);
+  } catch {
+    return { pcp_texto: '', alertas_pcp: [{ campo: 'pcp', severidade: 'aviso', mensagem: 'PCP (.docx) vazio ou ilegível' }] };
+  }
+
+  const linhas: string[] = [];
+  for (const tr of xml.match(/<w:tr(?:\s[^>]*)?>[\s\S]*?<\/w:tr>/g) ?? []) {
+    const cells = [...tr.matchAll(/<w:tc(?:\s[^>]*)?>[\s\S]*?<\/w:tc>/g)]
+      .map((m) => cellText(m[0]))
+      .filter((c) => c !== '');
+    if (cells.length) linhas.push(cells.join(' | '));
+  }
+
+  const pcp_texto = linhas.join('\n');
+  const alertas_pcp = pcp_texto.trim().length < 20
+    ? [{ campo: 'pcp', severidade: 'aviso', mensagem: 'PCP (.docx) vazio ou ilegível' }]
+    : [];
+  return { pcp_texto, alertas_pcp };
+}
+
 function parsePcp(pcpB64: string) {
-  const binary = Uint8Array.from(atob(pcpB64), (c) => c.charCodeAt(0));
-  const wb = XLSX.read(binary, { type: 'array' });
+  const bytes = Uint8Array.from(atob(pcpB64), (c) => c.charCodeAt(0));
+  if (isDocx(bytes)) return parsePcpDocx(bytes);
+  const wb = XLSX.read(bytes, { type: 'array' });
   const ws = wb.Sheets[wb.SheetNames[0]];
   if (!ws || !ws['!ref']) {
     return { pcp_texto: '', alertas_pcp: [{ campo: 'pcp', severidade: 'aviso', mensagem: 'PCP vazio ou ilegível' }] };

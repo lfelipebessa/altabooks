@@ -71,6 +71,30 @@ describe('useUploadMetadados', () => {
     expect(deleteMock).not.toHaveBeenCalled();
   });
 
+  it('PCP em .docx: preserva extensão no pcp_path e no upload', async () => {
+    uploadMock.mockResolvedValue({ data: {}, error: null });
+
+    const { result } = renderHook(() => useUploadMetadados());
+    let jobId = '';
+
+    await act(async () => {
+      jobId = await result.current.upload({
+        capa: file('capa.pdf', 100, 'application/pdf'),
+        miolo: file('miolo.pdf', 200, 'application/pdf'),
+        pcp: file('DadosTecnicos.docx', 50, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
+      });
+    });
+
+    expect(insertMock).toHaveBeenCalledWith(
+      expect.objectContaining({ pcp_path: `${jobId}/pcp.docx` })
+    );
+    expect(uploadMock).toHaveBeenCalledWith(
+      `${jobId}/pcp.docx`,
+      expect.any(File),
+      expect.anything()
+    );
+  });
+
   it('falha no 3º upload: remove arquivos já enviados, deleta job, lança', async () => {
     uploadMock
       .mockResolvedValueOnce({ data: {}, error: null })

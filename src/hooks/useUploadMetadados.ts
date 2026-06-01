@@ -14,6 +14,12 @@ export interface UploadInput {
   pcp: File;
 }
 
+// PCP aceita .xlsx (planilha) ou .docx (tabela do Word) — preserva a extensão real
+// pra que o n8n/edge function saibam o formato pelo path.
+function pcpExt(file: File): 'docx' | 'xlsx' {
+  return /\.docx$/i.test(file.name) ? 'docx' : 'xlsx';
+}
+
 export function useUploadMetadados() {
   const [loading, setLoading] = useState(false);
   const [progresso, setProgresso] = useState({ capa: false, miolo: false, pcp: false });
@@ -27,6 +33,7 @@ export function useUploadMetadados() {
     setProgresso({ capa: false, miolo: false, pcp: false });
 
     const jobId = crypto.randomUUID();
+    const pcpExtension = pcpExt(input.pcp);
     const uploaded: string[] = [];
     let jobInserted = false;
 
@@ -38,7 +45,7 @@ export function useUploadMetadados() {
         id: jobId,
         capa_path: `${jobId}/capa.pdf`,
         miolo_path: `${jobId}/miolo.pdf`,
-        pcp_path: `${jobId}/pcp.xlsx`,
+        pcp_path: `${jobId}/pcp.${pcpExtension}`,
         status: 'aguardando',
         created_by: userId,
       });
@@ -52,7 +59,7 @@ export function useUploadMetadados() {
       ];
 
       for (const [slot, f] of passos) {
-        const ext = slot === 'pcp' ? 'xlsx' : 'pdf';
+        const ext = slot === 'pcp' ? pcpExtension : 'pdf';
         const path = `${jobId}/${slot}.${ext}`;
         const { error } = await supabase.storage.from('metadados').upload(path, f, { upsert: false });
         if (error) throw new Error(error.message);

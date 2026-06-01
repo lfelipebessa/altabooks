@@ -123,10 +123,16 @@ export function MetadadosDetalhe() {
   const outroJobId = extrairOutroJobId(alertaDup?.mensagem);
 
   const apagarDuplicado = useCallback(async (outroId: string) => {
+    // pcp_path pode ser .xlsx ou .docx — busca o real do outro job pra não deixar órfão
+    const { data: outro } = await supabase
+      .from('metadados_jobs')
+      .select('pcp_path')
+      .eq('id', outroId)
+      .maybeSingle();
     const paths = [
       `${outroId}/capa.pdf`,
       `${outroId}/miolo.pdf`,
-      `${outroId}/pcp.xlsx`,
+      outro?.pcp_path ?? `${outroId}/pcp.xlsx`,
       `${outroId}/bookinfo.xlsx`,
     ];
     await supabase.storage.from('metadados').remove(paths);

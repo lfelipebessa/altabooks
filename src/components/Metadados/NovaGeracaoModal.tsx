@@ -11,8 +11,9 @@ interface Props {
 }
 
 const PDF_ACCEPT = { 'application/pdf': ['.pdf'] };
-const XLSX_ACCEPT = {
+const PCP_ACCEPT = {
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
 };
 
 const MAX_CAPA = 30 * 1024 * 1024;
@@ -104,8 +105,8 @@ export function NovaGeracaoModal({ open, onClose, onSucesso }: Props) {
         />
         <FileDropzone
           mode="single"
-          label="Tabela PCP (.xlsx, máx 5MB)"
-          accept={XLSX_ACCEPT}
+          label="Tabela PCP (.xlsx ou .docx, máx 5MB)"
+          accept={PCP_ACCEPT}
           maxSize={MAX_PCP}
           value={pcp}
           onChange={setPcp}
